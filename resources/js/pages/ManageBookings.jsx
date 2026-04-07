@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Phone, Mail, Edit2, Trash2, X, RefreshCw } from 'lucide-react';
+import { Clock, Phone, Mail, Edit2, Trash2, X, RefreshCw, PieChart, History } from 'lucide-react';
 import { getBookings, deleteBooking, updateBooking } from '../services/api';
+import CustomerStatsModal from '../components/CustomerStatsModal';
 
 export default function ManageBookings() {
     const [bookings, setBookings] = useState([]);
     const [loadingAdmin, setLoadingAdmin] = useState(false);
     const [editingBooking, setEditingBooking] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [selectedCustomer, setSelectedCustomer] = useState(null);
+    const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
     
     const itemsPerPage = 8;
     const totalPages = Math.ceil(bookings.length / itemsPerPage);
@@ -26,6 +29,17 @@ export default function ManageBookings() {
         } finally {
             setLoadingAdmin(false);
         }
+    };
+
+    const handleViewStats = (booking) => {
+        setSelectedCustomer({
+            id: booking.customer_id,
+            name: booking.customer_name,
+            phone: booking.phone_number,
+            email: booking.email,
+            address: booking.address
+        });
+        setIsStatsModalOpen(true);
     };
 
     const handleDeleteBooking = async (id) => {
@@ -99,6 +113,13 @@ export default function ManageBookings() {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
+                                                <button 
+                                                    onClick={() => handleViewStats(booking)}
+                                                    className="p-2 border border-blue-100 text-blue-500 rounded-lg hover:bg-blue-500 hover:text-white transition-all"
+                                                    title="View Service History"
+                                                >
+                                                    <PieChart size={16} />
+                                                </button>
                                                 <button onClick={() => setEditingBooking(booking)} className="p-2 border border-gray-200 text-gray-500 rounded-lg hover:bg-gray-100 transition-all">
                                                     <Edit2 size={16} />
                                                 </button>
@@ -212,6 +233,12 @@ export default function ManageBookings() {
                     </div>
                 </div>
             )}
+            {/* Customer Stats Modal */}
+            <CustomerStatsModal 
+                isOpen={isStatsModalOpen} 
+                customer={selectedCustomer} 
+                onClose={() => setIsStatsModalOpen(false)} 
+            />
         </div>
     );
 }

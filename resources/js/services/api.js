@@ -283,6 +283,19 @@ export const getCustomerStats = async (id) => {
 };
 
 /**
+ * Get dashboard statistics
+ */
+export const getDashboardStats = async () => {
+    try {
+        const response = await fetch('/api/dashboard/stats');
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+        throw error;
+    }
+};
+
+/**
  * Get recent notifications
  */
 export const getNotifications = async (all = false, page = 1) => {

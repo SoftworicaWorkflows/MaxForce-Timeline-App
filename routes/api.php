@@ -11,13 +11,15 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-// Notifications routes
-Route::prefix('notifications')->group(function () {
-    Route::get('/', [NotificationController::class, 'index']);
-    Route::put('/{id}/read', [NotificationController::class, 'markAsRead']);
-    Route::post('/read-all', [NotificationController::class, 'markAllAsRead']);
-});
+// Notification routes
+Route::get('/notifications', [NotificationController::class, 'index']);
+Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
 
+// Dashboard routes
+Route::get('/dashboard/stats', [BookingController::class, 'getDashboardStats']);
+
+// Schedule & Booking routes
 // Customer routes
 Route::prefix('customers')->group(function () {
     Route::get('/', [CustomerController::class, 'index']);

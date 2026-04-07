@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use App\Models\Customer;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -10,6 +11,53 @@ use Carbon\Carbon;
 
 class BookingController extends Controller
 {
+    /**
+     * Get statistics for the dashboard.
+     */
+    public function getDashboardStats(): JsonResponse
+    {
+        $totalCustomers = Customer::count();
+        $totalBookings = Booking::count();
+        $bookingsThisMonth = Booking::whereMonth('booking_date', Carbon::now()->month)
+            ->whereYear('booking_date', Carbon::now()->year)
+            ->count();
+        $upcomingBookings = Booking::where('booking_date', '>=', Carbon::now()->toDateString())
+            ->where('status', 'booked')
+            ->count();
+        $unreadNotifications = Notification::where('is_read', false)->count();
+
+        // Trend data for charts (last 6 months)
+        $bookingTrends = [];
+        $customerTrends = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = Carbon::now()->subMonths($i);
+            $monthName = $month->format('M');
+            
+            $bookingCount = Booking::whereMonth('booking_date', $month->month)
+                ->whereYear('booking_date', $month->year)
+                ->count();
+                
+            $customerCount = Customer::whereMonth('created_at', $month->month)
+                ->whereYear('created_at', $month->year)
+                ->count();
+                
+            $bookingTrends[] = ['month' => $monthName, 'count' => $bookingCount];
+            $customerTrends[] = ['month' => $monthName, 'count' => $customerCount];
+        }
+
+        return response()->json([
+            'success' => true,
+            'stats' => [
+                'totalCustomers' => $totalCustomers,
+                'totalBookings' => $totalBookings,
+                'bookingsThisMonth' => $bookingsThisMonth,
+                'upcomingBookings' => $upcomingBookings,
+                'unreadNotifications' => $unreadNotifications,
+                'bookingTrends' => $bookingTrends,
+                'customerTrends' => $customerTrends,
+            ]
+        ]);
+    }
     /**
      * Get schedule for a specific date
      */

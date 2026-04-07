@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { getCustomers, deleteCustomer } from '../services/api';
-import { User, Phone, Mail, MapPin, Search, Plus, Filter, MoreVertical, ExternalLink, Edit3, PieChart, Trash2 } from 'lucide-react';
+import { User, Phone, Mail, MapPin, Search, Plus, Filter, MoreVertical, ExternalLink, Edit3, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import EditCustomerModal from '../components/EditCustomerModal';
-import CustomerStatsModal from '../components/CustomerStatsModal';
 
 export default function ManageCustomers() {
     const [customers, setCustomers] = useState([]);
@@ -11,9 +10,8 @@ export default function ManageCustomers() {
     const [searchTerm, setSearchTerm] = useState('');
     
     // Modal states
-    const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
+    const [selectedCustomer, setSelectedCustomer] = useState(null);
 
     useEffect(() => {
         fetchCustomers();
@@ -34,11 +32,6 @@ export default function ManageCustomers() {
     const handleEditCustomer = (customer) => {
         setSelectedCustomer(customer);
         setIsEditModalOpen(true);
-    };
-
-    const handleViewStats = (customer) => {
-        setSelectedCustomer(customer);
-        setIsStatsModalOpen(true);
     };
 
     const handleDeleteCustomer = async (id) => {
@@ -165,13 +158,6 @@ export default function ManageCustomers() {
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2 isolate">
                                                 <button 
-                                                    onClick={() => handleViewStats(customer)}
-                                                    className="p-2.5 bg-gray-50 text-blue-500 hover:bg-blue-500 hover:text-white rounded-xl transition-all"
-                                                    title="View Service History"
-                                                >
-                                                    <PieChart size={16} />
-                                                </button>
-                                                <button 
                                                     onClick={() => handleEditCustomer(customer)}
                                                     className="p-2.5 bg-gray-50 text-orange-500 hover:bg-orange-500 hover:text-white rounded-xl transition-all"
                                                     title="Edit Profile"
@@ -218,12 +204,6 @@ export default function ManageCustomers() {
                 customer={selectedCustomer} 
                 onClose={() => setIsEditModalOpen(false)} 
                 onUpdateSuccess={fetchCustomers} 
-            />
-
-            <CustomerStatsModal 
-                isOpen={isStatsModalOpen} 
-                customer={selectedCustomer} 
-                onClose={() => setIsStatsModalOpen(false)} 
             />
         </div>
     );

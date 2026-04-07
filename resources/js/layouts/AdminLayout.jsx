@@ -13,14 +13,17 @@ import {
     Bell,
     Settings,
     Users,
-    Search
+    Search,
+    LayoutDashboard
 } from 'lucide-react';
 import { NotificationProvider } from '../context/NotificationContext';
 import NotificationDropdown from '../components/NotificationDropdown';
+import LogoutModal from '../components/LogoutModal';
 
 export default function AdminLayout() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
     const location = useLocation();
 
     useEffect(() => {
@@ -43,13 +46,23 @@ export default function AdminLayout() {
                     isSidebarOpen={isSidebarOpen} 
                     setIsSidebarOpen={setIsSidebarOpen} 
                     isMobile={isMobile} 
+                    setIsLogoutModalOpen={setIsLogoutModalOpen}
+                />
+                
+                <LogoutModal 
+                    isOpen={isLogoutModalOpen}
+                    onClose={() => setIsLogoutModalOpen(false)}
+                    onConfirm={() => {
+                        localStorage.removeItem('isLoggedIn');
+                        window.location.href = '/';
+                    }}
                 />
             </div>
         </NotificationProvider>
     );
 }
 
-const SidebarAndMain = ({ isSidebarOpen, setIsSidebarOpen, isMobile }) => {
+const SidebarAndMain = ({ isSidebarOpen, setIsSidebarOpen, isMobile, setIsLogoutModalOpen }) => {
     return (
         <>
             {/* Mobile Header */}
@@ -95,18 +108,22 @@ const SidebarAndMain = ({ isSidebarOpen, setIsSidebarOpen, isMobile }) => {
                 
                 <div className="flex-1 overflow-y-auto py-6 px-4 space-y-6 scrollbar-thin">
                     <NavSection title="Main Overview">
-                        <SidebarItem to="/schedule" icon={CalendarIcon} label="Schedule View" />
+                        <SidebarItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
+                        <SidebarItem to="/schedule" icon={CalendarIcon} label="My Schedule" />
                     </NavSection>
 
                     <NavSection title="Customer Section">
-                        <SidebarItem to="/customers" icon={Users} label="Manage Customers" />
                         <SidebarItem to="/create" icon={UserPlus} label="Add Customer" />
+                        <SidebarItem to="/customers" icon={Users} label="Manage Customers" />
                         <SidebarItem to="/manage" icon={Clock} label="Customer Schedule" badge="12" />
                     </NavSection>
 
                     <NavSection title="System">
                         <SidebarItem to="/settings" icon={Settings} label="Settings" />
-                        <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all font-medium">
+                        <button 
+                            onClick={() => setIsLogoutModalOpen(true)}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all font-medium"
+                        >
                             <LogOut size={20} />
                             <span className="flex-1 text-left text-sm">Logout</span>
                         </button>

@@ -11,6 +11,7 @@ import ManageCustomers from './pages/ManageCustomers';
 import BlockSlots from './pages/BlockSlots';
 import Settings from './pages/Settings';
 import ActivityLog from './pages/ActivityLog';
+import Dashboard from './pages/Dashboard';
 import '../css/app.css';
 
 function App() {
@@ -35,11 +36,12 @@ function App() {
     return (
         <Router>
             <Routes>
-                <Route path="/" element={isLoggedIn ? <Navigate to="/schedule" /> : <Login />} />
+                <Route path="/" element={isLoggedIn ? <Navigate to="/dashboard" /> : <Login />} />
                 
                 {/* Admin/Dashboard Layout routes */}
                 {isLoggedIn && (
                     <Route element={<AdminLayout />}>
+                        <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/schedule" element={<PublicSchedule />} />
                         <Route path="/manage" element={<ManageBookings />} />
                         <Route path="/customers" element={<ManageCustomers />} />
