@@ -299,18 +299,10 @@ const SidebarAndMain = ({
                                         <p className="text-sm font-bold text-gray-900">Admin User</p>
                                         <p className="text-xs text-gray-500">admin@maxforce.com</p>
                                     </div>
-                                    <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2">
-                                        <User size={16} />
-                                        Profile Settings
-                                    </button>
-                                    <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2">
-                                        <Shield size={16} />
-                                        Security
-                                    </button>
-                                    <div className="border-t border-gray-100 mt-2 pt-2">
+                                    <div className="pt-1">
                                         <button 
                                             onClick={() => setIsLogoutModalOpen(true)}
-                                            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+                                            className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 font-semibold"
                                         >
                                             <LogOut size={16} />
                                             Logout
