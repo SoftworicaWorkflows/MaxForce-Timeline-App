@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { getBookings } from '../services/api';
 import {
     Calendar as CalendarIcon,
     Clock,
@@ -14,7 +15,10 @@ import {
     Settings,
     Users,
     Search,
-    LayoutDashboard
+    LayoutDashboard,
+    ChevronDown,
+    User,
+    HelpCircle
 } from 'lucide-react';
 import { NotificationProvider } from '../context/NotificationContext';
 import NotificationDropdown from '../components/NotificationDropdown';
@@ -25,7 +29,24 @@ export default function AdminLayout() {
     const [isMobile, setIsMobile] = useState(false);
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const [upcomingCount, setUpcomingCount] = useState(0);
     const location = useLocation();
+
+    useEffect(() => {
+        const fetchNavData = async () => {
+            try {
+                const res = await getBookings();
+                if (res.success && res.bookings) {
+                    const count = res.bookings.filter(b => b.status === 'booked').length;
+                    setUpcomingCount(count);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        };
+        fetchNavData();
+    }, [location]);
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -45,15 +66,29 @@ export default function AdminLayout() {
         }
     }, [location, isMobile]);
 
+    // Close user menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (isUserMenuOpen && !event.target.closest('.user-menu')) {
+                setIsUserMenuOpen(false);
+            }
+        };
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, [isUserMenuOpen]);
+
     return (
         <NotificationProvider>
-            <div className="h-screen flex overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 font-['Inter',system-ui,sans-serif]">
+            <div className="h-screen flex overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
                 <SidebarAndMain
                     isSidebarOpen={isSidebarOpen}
                     setIsSidebarOpen={setIsSidebarOpen}
                     isMobile={isMobile}
                     setIsLogoutModalOpen={setIsLogoutModalOpen}
                     currentTime={currentTime}
+                    isUserMenuOpen={isUserMenuOpen}
+                    setIsUserMenuOpen={setIsUserMenuOpen}
+                    upcomingCount={upcomingCount}
                 />
 
                 <LogoutModal
@@ -61,6 +96,7 @@ export default function AdminLayout() {
                     onClose={() => setIsLogoutModalOpen(false)}
                     onConfirm={() => {
                         localStorage.removeItem('isLoggedIn');
+                        localStorage.removeItem('lastLoginTime');
                         window.location.href = '/';
                     }}
                 />
@@ -69,22 +105,36 @@ export default function AdminLayout() {
     );
 }
 
-const SidebarAndMain = ({ isSidebarOpen, setIsSidebarOpen, isMobile, setIsLogoutModalOpen, currentTime }) => {
+const SidebarAndMain = ({ 
+    isSidebarOpen, 
+    setIsSidebarOpen, 
+    isMobile, 
+    setIsLogoutModalOpen, 
+    currentTime,
+    isUserMenuOpen,
+    setIsUserMenuOpen,
+    upcomingCount
+}) => {
     return (
         <>
             {/* Mobile Header */}
             <div className="md:hidden fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md border-b border-gray-100 z-50">
                 <div className="flex items-center justify-between px-4 py-3">
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center shadow-md">
+                        <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center shadow-md bg-white">
                             <img src="/images/logo.png" alt="MaxForce" className="w-full h-full object-contain" />
+                        </div>
+                        <div>
+                            <h1 className="text-sm font-bold text-gray-900">MaxForce</h1>
+                            <p className="text-[9px] font-medium text-gray-500">Admin Panel</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
                         <NotificationDropdown />
                         <button
                             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                            className="p-2 rounded-xl bg-gradient-to-r from-[#1B365D] to-[#1B365D] text-white shadow-md"
+                            className="p-2 rounded-xl bg-gradient-to-r from-[#1B365D] to-[#1B365D] text-white shadow-md hover:shadow-lg transition-all"
+                            aria-label="Toggle menu"
                         >
                             {isSidebarOpen ? <X size={18} /> : <Menu size={18} />}
                         </button>
@@ -95,7 +145,7 @@ const SidebarAndMain = ({ isSidebarOpen, setIsSidebarOpen, isMobile, setIsLogout
             {/* Sidebar Overlay */}
             {isSidebarOpen && isMobile && (
                 <div
-                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 animate-in fade-in duration-200"
                     onClick={() => setIsSidebarOpen(false)}
                 />
             )}
@@ -103,87 +153,156 @@ const SidebarAndMain = ({ isSidebarOpen, setIsSidebarOpen, isMobile, setIsLogout
             {/* Left Sidebar */}
             <aside className={`
                 ${isMobile ? 'fixed inset-y-0 left-0 z-50' : 'relative'} 
-                h-full w-72 bg-white shadow-2xl transition-transform duration-300
+                h-full w-72 bg-white shadow-2xl transition-all duration-300 ease-in-out
                 flex flex-col flex-shrink-0
                 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
             `}>
-                <div className="hidden md:block p-6 border-b border-gray-100 bg-[#1B365D]">
-                    <div className="p-1 bg-white rounded-sm transform transition-all border border-gray-100">
-                        <img src="/images/logo.png" alt="MaxForce Logo" className="w-full h-12 object-contain" />
+                {/* Desktop Logo Section */}
+                <div className="hidden md:block p-6 border-b border-gray-100 bg-gradient-to-r from-[#1B365D] to-[#1B365D]">
+                    <div className="flex items-center justify-center gap-3">
+                        <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+                            <img src="/images/logo.png" alt="MaxForce Logo" className="w-10 h-10 object-contain" />
+                        </div>
+                        <div className="text-white">
+                            <h2 className="text-lg font-bold tracking-tight">MaxForce</h2>
+                            <p className="text-[9px] font-medium text-white/70 uppercase tracking-wider">Admin Dashboard</p>
+                        </div>
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto py-6 px-4 space-y-6 scrollbar-thin">
+                {/* Navigation Menu */}
+                <div className="flex-1 overflow-y-auto py-6 px-4 space-y-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                     <NavSection title="Main Overview">
                         <SidebarItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
                         <SidebarItem to="/schedule" icon={CalendarIcon} label="My Schedule" />
                     </NavSection>
 
-                    <NavSection title="Customer Section">
+                    <NavSection title="Customer Management">
                         <SidebarItem to="/create" icon={UserPlus} label="Add Customer" />
                         <SidebarItem to="/customers" icon={Users} label="Manage Customers" />
-                        <SidebarItem to="/manage" icon={Clock} label="Customer Schedule" badge="12" />
+                        <SidebarItem 
+                            to="/manage" 
+                            icon={Clock} 
+                            label="Customer Schedule" 
+                            badge={upcomingCount > 0 ? upcomingCount.toString() : null} 
+                        />
                     </NavSection>
 
-                    <NavSection title="System">
+                    <NavSection title="System & Security">
                         <SidebarItem to="/settings" icon={Settings} label="Settings" />
                         <button
                             onClick={() => setIsLogoutModalOpen(true)}
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all font-medium"
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all duration-200 font-medium group"
                         >
-                            <LogOut size={20} />
+                            <LogOut size={20} className="group-hover:scale-110 transition-transform" />
                             <span className="flex-1 text-left text-sm">Logout</span>
                         </button>
                     </NavSection>
+                </div>
+
+                {/* Sidebar Footer */}
+                <div className="p-4 border-t border-gray-100">
+                    <div className="bg-gray-50 rounded-xl p-3">
+                        <div className="flex items-center gap-3">
+                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            <div className="flex-1">
+                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">System Status</p>
+                                <p className="text-xs font-semibold text-gray-700">Operational</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </aside>
 
             {/* Main Content Area */}
             <main className={`flex-1 h-full overflow-hidden flex flex-col ${isMobile ? 'pt-16' : ''}`}>
                 {/* Desktop Top Header */}
-                <header className="hidden md:flex h-20 bg-white border-b border-gray-100 px-8 items-center justify-between sticky top-0 z-30">
-                    <div className="relative w-96 group">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#1B365D] transition-colors" size={18} />
+                <header className="hidden md:flex h-20 bg-white border-b border-gray-100 px-6 lg:px-8 items-center justify-between sticky top-0 z-30 shadow-sm">
+                    {/* Search Bar */}
+                    <div className="relative w-80 lg:w-96">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
                         <input
                             type="text"
-                            placeholder="Quick search bookings..."
-                            className="w-full pl-12 pr-4 py-2.5 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-[#1B365D] focus:bg-white transition-all text-xs font-semibold"
+                            placeholder="Search customers, bookings..."
+                            className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1B365D] focus:bg-white transition-all text-sm font-medium placeholder:text-gray-400"
                         />
                     </div>
                     
-                    {/* Live Digital Clock Section */}
-                    <div className="flex items-center gap-4 px-5 py-2.5 bg-gray-50/80 rounded-2xl border border-gray-100 ml-6 group transition-all hover:bg-white hover:shadow-sm">
-                        <div className="relative flex items-center justify-center">
-                            <div className="w-2 h-2 bg-[#8CC63F] rounded-full animate-pulse shadow-[0_0_10px_rgba(140,198,63,0.5)]" />
-                            <div className="absolute inset-0 bg-[#8CC63F] rounded-full animate-ping opacity-25" />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-none">System Live</span>
-                            <span className="text-sm font-black text-[#1B365D] tabular-nums tracking-tight mt-1">
-                                {currentTime.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                            </span>
-                        </div>
-                    </div>
-
+                    {/* Right Section */}
                     <div className="flex items-center gap-4">
-                        <NotificationDropdown />
-                        <p className="text-sm text-gray-400 font-medium mt-0.5">Last login: <br /> {localStorage.getItem('lastLoginTime') || 'Just now'}</p>
-                        <div className="h-10 w-[1px] bg-gray-100 mx-2" />
-                        <div className="flex items-center gap-3 pl-2">
-                            <div className="text-right hidden lg:block">
-                                <p className="text-xs font-black text-[#1B365D] leading-none mb-1">Admin User</p>
-                                <div className="flex flex-col items-end">
-                                    <p className="text-[10px] font-bold text-[#8CC63F] uppercase tracking-tighter">System Manager</p>
-                                </div>
+                        {/* Live Clock */}
+                        <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-xl border border-gray-100">
+                            <div className="relative">
+                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                                <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-25" />
                             </div>
-                           <img src="/images/fevicon.png" className='h-8 rounded-full' alt="" />
+                            <div>
+                                <p className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Live System</p>
+                                <p className="text-sm font-bold text-gray-900 tabular-nums">
+                                    {currentTime.toLocaleTimeString('en-US', { 
+                                        hour12: true, 
+                                        hour: '2-digit', 
+                                        minute: '2-digit', 
+                                        second: '2-digit' 
+                                    })}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Notifications */}
+                        <NotificationDropdown />
+
+                        {/* User Menu */}
+                        <div className="relative user-menu">
+                            <button
+                                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                                className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-50 transition-all border border-transparent hover:border-gray-200"
+                            >
+                                <div className="text-right hidden lg:block">
+                                    <p className="text-sm font-bold text-gray-900 leading-none">Admin User</p>
+                                    <p className="text-[10px] font-semibold text-green-600 uppercase tracking-tighter mt-1">
+                                        System Manager
+                                    </p>
+                                </div>
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1B365D] to-[#1B365D] flex items-center justify-center text-white shadow-md">
+                                    <User size={20} />
+                                </div>
+                                <ChevronDown size={16} className={`text-gray-400 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {/* User Dropdown Menu */}
+                            {isUserMenuOpen && (
+                                <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 py-2 animate-in slide-in-from-top-2 duration-200">
+                                    <div className="px-4 py-3 border-b border-gray-100">
+                                        <p className="text-sm font-bold text-gray-900">Admin User</p>
+                                        <p className="text-xs text-gray-500">admin@maxforce.com</p>
+                                    </div>
+                                    <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2">
+                                        <User size={16} />
+                                        Profile Settings
+                                    </button>
+                                    <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2">
+                                        <Shield size={16} />
+                                        Security
+                                    </button>
+                                    <div className="border-t border-gray-100 mt-2 pt-2">
+                                        <button 
+                                            onClick={() => setIsLogoutModalOpen(true)}
+                                            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+                                        >
+                                            <LogOut size={16} />
+                                            Logout
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </header>
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto scrollbar-thin bg-gray-50/30">
-                    <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto min-h-full">
+                {/* Content Area */}
+                <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent bg-gray-50/30">
+                    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto min-h-full">
                         <Outlet />
                     </div>
                 </div>
@@ -193,8 +312,8 @@ const SidebarAndMain = ({ isSidebarOpen, setIsSidebarOpen, isMobile, setIsLogout
 };
 
 const NavSection = ({ title, children }) => (
-    <div>
-        <p className="text-[10px] font-black uppercase tracking-wider text-gray-400 mb-3 px-3">
+    <div className="space-y-2">
+        <p className="text-[10px] font-black uppercase tracking-wider text-gray-400 px-3">
             {title}
         </p>
         <div className="space-y-1">
@@ -219,7 +338,7 @@ const SidebarItem = ({ to, icon: Icon, label, badge }) => (
             <>
                 <Icon
                     size={20}
-                    className={`transition-all ${isActive ? 'text-[#8CC63F]' : 'text-gray-400 group-hover:text-[#8CC63F]'}`}
+                    className={`transition-all duration-200 ${isActive ? 'text-[#8CC63F]' : 'text-gray-400 group-hover:text-[#8CC63F]'}`}
                 />
                 <span className="flex-1 text-left">{label}</span>
                 {badge && !isActive && (
@@ -227,7 +346,7 @@ const SidebarItem = ({ to, icon: Icon, label, badge }) => (
                         {badge}
                     </span>
                 )}
-                {isActive && <ChevronRight size={16} className="text-[#8CC63F]" />}
+                {isActive && <ChevronRight size={16} className="text-[#8CC63F] animate-in slide-in-from-left-1" />}
             </>
         )}
     </NavLink>

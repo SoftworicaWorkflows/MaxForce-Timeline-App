@@ -1,12 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Bell, Check, Trash2, Clock, Info, CheckCircle, AlertTriangle, AlertCircle, X } from 'lucide-react';
+import { Bell, Check, Trash2, Clock, Info, CheckCircle, AlertTriangle, AlertCircle, X, Settings } from 'lucide-react';
 import { useNotifications } from '../context/NotificationContext';
 
 // Simple time ago formatter to avoid date-fns dependency issues
 const formatTimeAgo = (date) => {
+    if (!date) return 'recently';
+    
     const now = new Date();
-    const diffInSeconds = Math.floor((now - new Date(date)) / 1000);
+    const past = new Date(date);
+    const diffInSeconds = Math.floor((now - past) / 1000);
     
     if (diffInSeconds < 60) return 'just now';
     const diffInMinutes = Math.floor(diffInSeconds / 60);
@@ -14,19 +17,31 @@ const formatTimeAgo = (date) => {
     const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24) return `${diffInHours}h ago`;
     const diffInDays = Math.floor(diffInHours / 24);
-    return `${diffInDays}d ago`;
+    if (diffInDays < 7) return `${diffInDays}d ago`;
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    if (diffInWeeks < 4) return `${diffInWeeks}w ago`;
+    const diffInMonths = Math.floor(diffInDays / 30);
+    return `${diffInMonths}mo ago`;
 };
 
-const NotificationItem = ({ notification, onMarkAsRead }) => {
+const NotificationItem = ({ notification, onMarkAsRead, onDelete }) => {
+    const [isHovered, setIsHovered] = useState(false);
+
     const getIcon = (type) => {
-        switch (type) {
-            case 'success': return <CheckCircle className="text-green-500" size={16} />;
-            case 'warning': return <AlertTriangle className="text-amber-500" size={16} />;
-            case 'error': return <AlertCircle className="text-red-500" size={16} />;
-            case 'info':
-            default: return <Info className="text-[#1B365D]" size={16} />;
-        }
+        const iconConfig = {
+            success: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-50' },
+            warning: { icon: AlertTriangle, color: 'text-amber-500', bg: 'bg-amber-50' },
+            error: { icon: AlertCircle, color: 'text-red-500', bg: 'bg-red-50' },
+            info: { icon: Info, color: 'text-blue-600', bg: 'bg-blue-50' }
+        };
+        
+        const config = iconConfig[type] || iconConfig.info;
+        const Icon = config.icon;
+        
+        return { icon: <Icon size={16} className={config.color} />, bg: config.bg };
     };
+
+    const { icon, bg } = getIcon(notification.type);
 
     const handleClick = () => {
         if (!notification.is_read) {
@@ -34,145 +49,340 @@ const NotificationItem = ({ notification, onMarkAsRead }) => {
         }
     };
 
+    const handleDelete = (e) => {
+        e.stopPropagation();
+        if (onDelete) {
+            onDelete(notification.id);
+        }
+    };
+
     return (
         <div 
             onClick={handleClick}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
             className={`
                 p-4 transition-all duration-200 cursor-pointer 
-                border-b border-gray-50 flex gap-4
-                ${notification.is_read ? 'opacity-60 bg-white' : 'bg-[#1B365D]/5 hover:bg-[#1B365D]/10'}
+                border-b border-gray-100 flex gap-3 relative group
+                ${notification.is_read 
+                    ? 'bg-white hover:bg-gray-50' 
+                    : 'bg-blue-50/30 hover:bg-blue-50/50'
+                }
             `}
+            role="button"
+            tabIndex={0}
+            onKeyPress={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    handleClick();
+                }
+            }}
         >
-            <div className={`p-2 rounded-xl flex-shrink-0 ${notification.is_read ? 'bg-gray-100' : 'bg-white shadow-sm'}`}>
-                {getIcon(notification.type)}
+            <div className={`p-2 rounded-xl flex-shrink-0 transition-all ${notification.is_read ? 'bg-gray-100' : bg}`}>
+                {icon}
             </div>
             <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-start mb-1">
-                    <h5 className={`text-xs font-black truncate ${notification.is_read ? 'text-gray-500' : 'text-[#1B365D]'}`}>
+                    <h5 className={`text-xs font-bold truncate ${notification.is_read ? 'text-gray-600' : 'text-gray-900'}`}>
                         {notification.title}
                     </h5>
                     {!notification.is_read && (
-                        <div className="w-2 h-2 bg-[#8CC63F] rounded-full animate-pulse flex-shrink-0 ml-2" />
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse flex-shrink-0 ml-2" />
                     )}
                 </div>
-                <p className={`text-[10px] line-clamp-2 leading-relaxed mb-1 ${notification.is_read ? 'text-gray-400 font-medium' : 'text-gray-600 font-bold'}`}>
+                <p className={`text-[11px] line-clamp-2 leading-relaxed mb-2 ${notification.is_read ? 'text-gray-500' : 'text-gray-700'}`}>
                     {notification.message}
                 </p>
-                <div className="flex items-center gap-1.5 text-[8px] text-gray-400 font-black uppercase tracking-widest">
-                    <Clock size={10} />
-                    {formatTimeAgo(notification.created_at)}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-[9px] text-gray-400 font-medium">
+                        <Clock size={10} />
+                        {formatTimeAgo(notification.created_at)}
+                    </div>
+                    {isHovered && onDelete && (
+                        <button
+                            onClick={handleDelete}
+                            className="p-1 hover:bg-red-50 rounded-lg transition-all text-gray-400 hover:text-red-500"
+                            aria-label="Delete notification"
+                        >
+                            <Trash2 size={12} />
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
     );
 };
 
+const NotificationSkeleton = () => (
+    <div className="p-4 border-b border-gray-100 flex gap-3 animate-pulse">
+        <div className="p-2 rounded-xl bg-gray-100 w-8 h-8" />
+        <div className="flex-1">
+            <div className="h-3 bg-gray-100 rounded w-3/4 mb-2" />
+            <div className="h-2 bg-gray-50 rounded w-full mb-1" />
+            <div className="h-2 bg-gray-50 rounded w-2/3" />
+        </div>
+    </div>
+);
+
 export default function NotificationDropdown() {
     const [isOpen, setIsOpen] = useState(false);
-    const { notifications, unreadCount, markAsRead, clearAll, loading } = useNotifications();
+    const [localUnreadCount, setLocalUnreadCount] = useState(0);
+    const { 
+        notifications, 
+        unreadCount, 
+        markAsRead, 
+        clearAll, 
+        deleteNotification,
+        loading 
+    } = useNotifications();
     const dropdownRef = useRef(null);
+    const buttonRef = useRef(null);
 
+    // Update local unread count based on actual notification objects
+    useEffect(() => {
+        const count = notifications.filter(n => !n.is_read).length;
+        setLocalUnreadCount(count);
+    }, [notifications]);
+
+    // Handle click outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setIsOpen(false);
             }
         };
+        
+        const handleEscape = (event) => {
+            if (event.key === 'Escape' && isOpen) {
+                setIsOpen(false);
+            }
+        };
+        
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+        document.addEventListener('keydown', handleEscape);
+        
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleEscape);
+        };
+    }, [isOpen]);
+
+    // Prevent body scroll when dropdown is open
+    useEffect(() => {
+        if (isOpen) {
+            const handleWheel = (e) => {
+                const dropdownContent = dropdownRef.current?.querySelector('.dropdown-content');
+                if (dropdownContent && dropdownContent.contains(e.target)) {
+                    const isAtTop = dropdownContent.scrollTop === 0;
+                    const isAtBottom = dropdownContent.scrollHeight - dropdownContent.scrollTop === dropdownContent.clientHeight;
+                    
+                    if ((isAtTop && e.deltaY < 0) || (isAtBottom && e.deltaY > 0)) {
+                        e.preventDefault();
+                    }
+                }
+            };
+            
+            document.addEventListener('wheel', handleWheel, { passive: false });
+            return () => document.removeEventListener('wheel', handleWheel);
+        }
+    }, [isOpen]);
+
+    const handleMarkAllAsRead = async () => {
+        await clearAll();
+    };
 
     return (
         <div className="relative" ref={dropdownRef}>
             {/* Bell Icon & Badge */}
             <button 
+                ref={buttonRef}
                 onClick={() => setIsOpen(!isOpen)}
                 className={`
-                    p-2.5 rounded-xl transition-all duration-300 relative group
-                    ${isOpen ? 'bg-[#1B365D] text-white shadow-lg' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}
+                    relative p-2.5 rounded-xl transition-all duration-300 group
+                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                    ${isOpen 
+                        ? 'bg-blue-600 text-white shadow-lg' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105'
+                    }
                 `}
+                aria-label={`Notifications ${localUnreadCount > 0 ? `(${localUnreadCount} unread)` : ''}`}
+                aria-expanded={isOpen}
+                aria-haspopup="true"
             >
-                <Bell size={20} className={isOpen ? 'animate-none' : 'group-hover:rotate-12 transition-transform'} />
-                {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black min-w-[18px] h-[18px] rounded-full flex items-center justify-center border-2 border-white animate-bounce-short shadow-sm">
-                        {unreadCount > 9 ? '9+' : unreadCount}
+                <Bell 
+                    size={20} 
+                    className={`transition-transform duration-300 ${isOpen ? 'animate-none' : 'group-hover:rotate-12'}`} 
+                />
+                {localUnreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center border-2 border-white animate-bounce shadow-sm">
+                        {localUnreadCount > 99 ? '99+' : localUnreadCount}
                     </span>
                 )}
             </button>
 
             {/* Dropdown Menu */}
             {isOpen && (
-                <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[100] overflow-hidden animate-in zoom-in-95 slide-in-from-top-4 duration-300 transform origin-top-right">
+                <div className="absolute right-0 mt-3 w-[90vw] sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[100] overflow-hidden animate-in zoom-in-95 slide-in-from-top-2 duration-300 transform origin-top-right">
                     {/* Header */}
-                    <div className="bg-[#1B365D] p-5 flex items-center justify-between">
-                        <div>
-                            <h4 className="text-white font-black text-sm uppercase tracking-wider">Notifications</h4>
-                            <p className="text-[10px] text-[#8CC63F] font-bold mt-0.5">
-                                You have {unreadCount} unread alerts
-                            </p>
-                        </div>
-                        <div className="flex gap-2">
-                             {unreadCount > 0 && (
+                    <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-5">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h4 className="text-white font-bold text-sm uppercase tracking-wider">
+                                    Notifications
+                                </h4>
+                                <p className="text-[10px] text-blue-100 font-medium mt-0.5">
+                                    {localUnreadCount === 0 
+                                        ? 'All caught up!' 
+                                        : `You have ${localUnreadCount} unread ${localUnreadCount === 1 ? 'alert' : 'alerts'}`
+                                    }
+                                </p>
+                            </div>
+                            <div className="flex gap-2">
+                                {localUnreadCount > 0 && (
+                                    <button 
+                                        onClick={handleMarkAllAsRead}
+                                        className="p-1.5 bg-white/10 text-white hover:bg-white/20 rounded-lg flex items-center gap-1.5 transition-all group"
+                                        title="Mark all as read"
+                                    >
+                                        <Check size={14} className="group-hover:scale-110 transition-transform" />
+                                        <span className="text-[9px] font-bold uppercase hidden sm:inline">
+                                            Mark all
+                                        </span>
+                                    </button>
+                                )}
                                 <button 
-                                    onClick={(e) => { e.stopPropagation(); clearAll(); }}
-                                    className="p-1.5 bg-white/10 text-white hover:bg-white/20 rounded-lg flex items-center gap-1.5 transition-all group"
-                                    title="Mark all as read"
+                                    onClick={() => setIsOpen(false)} 
+                                    className="p-1.5 bg-white/10 text-white hover:bg-white/20 rounded-lg transition-all hover:scale-110"
                                 >
-                                    <Check size={14} className="group-hover:scale-110 transition-transform" />
-                                    <span className="text-[9px] font-black uppercase">Clear All</span>
+                                    <X size={14} />
                                 </button>
-                             )}
-                             <button onClick={() => setIsOpen(false)} className="p-1.5 bg-white/10 text-white hover:bg-white/20 rounded-lg">
-                                <X size={14} />
-                             </button>
+                            </div>
                         </div>
                     </div>
 
                     {/* Content */}
-                    <div className="max-h-[400px] overflow-y-auto scrollbar-thin">
+                    <div className="dropdown-content max-h-[400px] overflow-y-auto custom-scrollbar">
                         {loading ? (
-                            <div className="p-10 text-center">
-                                <div className="w-8 h-8 border-2 border-[#1B365D] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-                                <p className="text-[10px] font-black uppercase text-gray-400">Loading alerts...</p>
-                            </div>
+                            <>
+                                <NotificationSkeleton />
+                                <NotificationSkeleton />
+                                <NotificationSkeleton />
+                            </>
                         ) : notifications.length > 0 ? (
                             notifications.map(notification => (
                                 <NotificationItem 
                                     key={notification.id} 
                                     notification={notification} 
-                                    onMarkAsRead={markAsRead} 
+                                    onMarkAsRead={markAsRead}
                                 />
                             ))
                         ) : (
-                            <div className="py-12 px-6 text-center">
-                                <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Bell size={24} className="text-gray-200" />
+                            <div className="py-16 px-6 text-center">
+                                <div className="w-16 h-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Bell size={28} className="text-gray-300" />
                                 </div>
-                                <h6 className="font-black text-[#1B365D] text-xs uppercase mb-1">All Caught Up!</h6>
-                                <p className="text-[10px] text-gray-400 font-medium">No new notifications to show.</p>
+                                <h6 className="font-bold text-gray-700 text-sm mb-1">
+                                    No notifications
+                                </h6>
+                                <p className="text-[11px] text-gray-400">
+                                    You're all caught up! Check back later for updates.
+                                </p>
                             </div>
                         )}
                     </div>
 
                     {/* Footer */}
-                    <div className="p-3 bg-gray-50 border-t border-gray-100 text-center">
-                        <Link 
-                            to="/activity"
-                            onClick={() => setIsOpen(false)}
-                            className="block w-full py-2 text-[10px] font-black text-[#1B365D] uppercase tracking-widest hover:text-[#8CC63F] transition-all"
-                        >
-                            View All Activity
-                        </Link>
+                    <div className="p-3 bg-gray-50 border-t border-gray-100">
+                        <div className="flex gap-2">
+                            <Link 
+                                to="/notifications"
+                                onClick={() => setIsOpen(false)}
+                                className="flex-1 text-center py-2 text-[10px] font-bold text-gray-600 uppercase tracking-wider hover:text-blue-600 transition-all bg-white rounded-lg hover:bg-blue-50"
+                            >
+                                View All
+                            </Link>
+                            <Link 
+                                to="/settings/notifications"
+                                onClick={() => setIsOpen(false)}
+                                className="px-3 py-2 text-[10px] font-bold text-gray-600 uppercase tracking-wider hover:text-blue-600 transition-all bg-white rounded-lg hover:bg-blue-50 flex items-center gap-1"
+                            >
+                                <Settings size={12} />
+                                Settings
+                            </Link>
+                        </div>
                     </div>
                 </div>
             )}
+
+            {/* Global styles */}
+            <style jsx global>{`
+                @keyframes bounce {
+                    0%, 100% { transform: translateY(-5%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
+                    50% { transform: translateY(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+                }
+                
+                .animate-bounce {
+                    animation: bounce 1.5s infinite;
+                }
+                
+                .custom-scrollbar::-webkit-scrollbar {
+                    width: 4px;
+                }
+                
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: #f1f1f1;
+                }
+                
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: #c1c1c1;
+                    border-radius: 10px;
+                }
+                
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: #a8a8a8;
+                }
+                
+                .line-clamp-2 {
+                    display: -webkit-box;
+                    -webkit-line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                }
+                
+                @keyframes zoomIn {
+                    from {
+                        opacity: 0;
+                        transform: scale(0.95);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
+                }
+                
+                @keyframes slideInFromTop {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-10px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                
+                .animate-in {
+                    animation-duration: 0.3s;
+                    animation-fill-mode: both;
+                }
+                
+                .zoom-in-95 {
+                    animation-name: zoomIn;
+                }
+                
+                .slide-in-from-top-2 {
+                    animation-name: slideInFromTop;
+                }
+            `}</style>
         </div>
     );
 }
-
-// Add these styles to your global CSS
-// .animate-bounce-short { animation: bounce-short 1.5s infinite; }
-// @keyframes bounce-short {
-//   0%, 100% { transform: translateY(-5%); animation-timing-function: cubic-bezier(0.8,0,1,1); }
-//   50% { transform: none; animation-timing-function: cubic-bezier(0,0,0.2,1); }
-// }

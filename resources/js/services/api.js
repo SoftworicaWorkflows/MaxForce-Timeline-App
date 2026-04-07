@@ -315,7 +315,7 @@ export const getNotifications = async (all = false, page = 1) => {
 export const markNotificationAsRead = async (id) => {
     try {
         const response = await fetch(`/api/notifications/${id}/read`, {
-            method: 'PUT',
+            method: 'POST',
             headers: {
                 'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
@@ -333,7 +333,7 @@ export const markNotificationAsRead = async (id) => {
  */
 export const markAllNotificationsAsRead = async () => {
     try {
-        const response = await fetch('/api/notifications/read-all', {
+        const response = await fetch('/api/notifications/mark-all-read', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',

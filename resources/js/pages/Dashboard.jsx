@@ -10,7 +10,9 @@ import {
     ArrowDownRight,
     Clock,
     CheckCircle2,
-    Briefcase
+    Briefcase,
+    ChevronRight,
+    RefreshCw
 } from 'lucide-react';
 import { 
     BarChart, 
@@ -25,22 +27,106 @@ import {
     Cell
 } from 'recharts';
 
-const StatCard = ({ title, value, icon: Icon, color, delay, trend }) => (
-    <div className={`bg-white p-6 rounded-3xl shadow-xl border border-gray-100 flex items-center justify-between animate-in slide-in-from-bottom-4 duration-500 fill-mode-both`} style={{ animationDelay: `${delay}ms` }}>
-        <div className="flex-1">
-            <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">{title}</p>
-            <div className="flex items-center gap-3">
-                <h3 className="text-3xl font-black text-[#1B365D] tracking-tight">{value}</h3>
-                {trend && (
-                    <span className={`flex items-center text-[10px] font-black px-1.5 py-0.5 rounded-lg ${trend > 0 ? 'bg-green-50 text-green-600' : 'bg-rose-50 text-rose-600'}`}>
-                        {trend > 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                        {Math.abs(trend)}%
-                    </span>
-                )}
+// Stat Card Component
+const StatCard = ({ title, value, icon: Icon, color, delay, trend, isLoading }) => {
+    if (isLoading) {
+        return (
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-5 animate-pulse">
+                <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                        <div className="h-3 bg-gray-200 rounded w-20 mb-2"></div>
+                        <div className="h-8 bg-gray-200 rounded w-24"></div>
+                    </div>
+                    <div className="w-12 h-12 bg-gray-200 rounded-2xl"></div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className={`bg-white rounded-2xl shadow-lg border border-gray-100 p-5 transition-all duration-300 hover:shadow-xl hover:scale-[1.02] animate-in slide-in-from-bottom-4 duration-500 fill-mode-both`} 
+             style={{ animationDelay: `${delay}ms` }}>
+            <div className="flex items-start justify-between">
+                <div className="flex-1">
+                    <p className="text-[11px] font-semibold uppercase text-gray-400 tracking-wider mb-2">{title}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+                            {value}
+                        </h3>
+                        {trend && (
+                            <span className={`inline-flex items-center gap-0.5 text-xs font-bold px-2 py-1 rounded-full ${
+                                trend > 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
+                            }`}>
+                                {trend > 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                                {Math.abs(trend)}%
+                            </span>
+                        )}
+                    </div>
+                </div>
+                <div className={`p-3 rounded-2xl ${color} text-white shadow-lg shrink-0 ml-3`}>
+                    <Icon size={22} />
+                </div>
             </div>
         </div>
-        <div className={`p-4 rounded-2xl ${color} text-white shadow-lg`}>
-            <Icon size={24} />
+    );
+};
+
+// Booking Item Component
+const BookingItem = ({ booking, index }) => (
+    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all group animate-in slide-in-from-right-4 duration-500 fill-mode-both" 
+         style={{ animationDelay: `${index * 100}ms` }}>
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="w-14 h-14 bg-white rounded-xl shadow-sm flex flex-col items-center justify-center border border-gray-100 shrink-0">
+                <span className="text-[9px] font-bold text-green-600 uppercase leading-none">
+                    {new Date(booking.booking_date).toLocaleDateString('default', { month: 'short' })}
+                </span>
+                <span className="text-lg font-bold text-gray-900 leading-tight">
+                    {new Date(booking.booking_date).toLocaleDateString('default', { day: 'numeric' })}
+                </span>
+            </div>
+            <div className="flex-1 min-w-0">
+                <h4 className="font-bold text-gray-900 text-sm sm:text-base truncate group-hover:text-green-600 transition-colors">
+                    {booking.customer_name}
+                </h4>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] sm:text-xs font-medium text-gray-500 uppercase">
+                    <span className="flex items-center gap-1">
+                        <Clock size={12} /> 
+                        {booking.start_time?.substring(0, 5) || '--:--'}
+                    </span>
+                    <span className="flex items-center gap-1">
+                        <Briefcase size={12} /> 
+                        Pest Control
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div className="ml-3 hidden sm:block">
+            <span className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700 uppercase tracking-wider shadow-sm">
+                Confirmed
+            </span>
+        </div>
+        <ChevronRight size={16} className="text-gray-400 ml-2 sm:hidden" />
+    </div>
+);
+
+// Loading Skeleton Component
+const LoadingSkeleton = () => (
+    <div className="space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <StatCard isLoading={true} />
+            <StatCard isLoading={true} />
+            <StatCard isLoading={true} />
+            <StatCard isLoading={true} />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-2xl shadow-lg p-6 h-96 animate-pulse">
+                <div className="h-8 bg-gray-200 rounded-lg w-1/3 mb-6"></div>
+                <div className="h-64 bg-gray-100 rounded-xl"></div>
+            </div>
+            <div className="bg-white rounded-2xl shadow-lg p-6 h-96 animate-pulse">
+                <div className="h-8 bg-gray-200 rounded-lg w-1/3 mb-6"></div>
+                <div className="h-64 bg-gray-100 rounded-xl"></div>
+            </div>
         </div>
     </div>
 );
@@ -57,13 +143,14 @@ export default function Dashboard() {
     });
     const [recentBookings, setRecentBookings] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [lastUpdated, setLastUpdated] = useState(new Date());
 
     useEffect(() => {
         fetchDashboardData();
     }, []);
 
     const fetchDashboardData = async () => {
-        setLoading(true);
         try {
             const [statsRes, bookingsRes] = await Promise.all([
                 getDashboardStats(),
@@ -72,196 +159,218 @@ export default function Dashboard() {
             
             if (statsRes.success) setStats(statsRes.stats);
             if (bookingsRes.success) {
-                // Get the next 5 upcoming bookings
                 const upcoming = (bookingsRes.bookings || [])
                     .filter(b => b.status === 'booked')
                     .sort((a, b) => new Date(a.booking_date) - new Date(b.booking_date))
                     .slice(0, 5);
                 setRecentBookings(upcoming);
             }
+            setLastUpdated(new Date());
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
+    };
+
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        await fetchDashboardData();
     };
 
     const CustomTooltip = ({ active, payload, label }) => {
         if (active && payload && payload.length) {
             return (
-                <div className="bg-[#1B365D] p-3 rounded-xl border border-white/10 shadow-2xl">
-                    <p className="text-[10px] font-black text-[#8CC63F] uppercase tracking-widest mb-1">{label}</p>
-                    <p className="text-lg font-black text-white">{payload[0].value}</p>
+                <div className="bg-gray-900 p-3 rounded-xl shadow-2xl border border-gray-700">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{label}</p>
+                    <p className="text-2xl font-bold text-white">{payload[0].value}</p>
                 </div>
             );
         }
         return null;
     };
 
+    if (loading) return <LoadingSkeleton />;
+
     return (
-        <div className="w-full pb-10 space-y-8 animate-in fade-in duration-700">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-3xl font-black text-[#1B365D] tracking-tight">Executive Dashboard</h2>
-                    <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Analytics & Operations Summary</p>
-                </div>
-                <div className="hidden sm:flex items-center gap-2 bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm">
-                    <div className="w-2 h-2 rounded-full bg-[#8CC63F] animate-pulse"></div>
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Live Updates Active</span>
-                </div>
-            </div>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard 
-                    title="Total Customers" 
-                    value={stats.totalCustomers} 
-                    icon={Users} 
-                    color="bg-blue-600" 
-                    delay={100}
-                    trend={12}
-                />
-                <StatCard 
-                    title="Bookings Month" 
-                    value={stats.bookingsThisMonth} 
-                    icon={Zap} 
-                    color="bg-[#8CC63F]" 
-                    delay={200}
-                    trend={8}
-                />
-                <StatCard 
-                    title="Expected Volume" 
-                    value={stats.upcomingBookings} 
-                    icon={TrendingUp} 
-                    color="bg-indigo-600" 
-                    delay={300}
-                />
-                <StatCard 
-                    title="System Alerts" 
-                    value={stats.unreadNotifications} 
-                    icon={Bell} 
-                    color="bg-rose-500" 
-                    delay={400}
-                />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Service Volume Chart */}
-                <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100">
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h3 className="text-lg font-black text-[#1B365D] tracking-tight">Service Volume</h3>
-                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-none mt-1">Monthly Booking Trends</p>
-                        </div>
-                        <div className="px-3 py-1.5 bg-gray-50 rounded-lg text-[9px] font-black text-gray-400 uppercase">Last 6 Months</div>
-                    </div>
-                    <div className="h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={stats.bookingTrends}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                                <XAxis 
-                                    dataKey="month" 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{fontSize: 10, fontWeight: 900, fill: '#CBD5E1'}}
-                                    dy={10}
-                                />
-                                <YAxis hide />
-                                <Tooltip content={<CustomTooltip />} cursor={{fill: '#F8FAFC'}} />
-                                <Bar dataKey="count" radius={[6, 6, 0, 0]} barSize={40}>
-                                    {stats.bookingTrends.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={index === 5 ? '#8CC63F' : '#1B365D'} opacity={0.8 + (index * 0.04)} />
-                                    ))}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-
-                {/* Customer Growth Chart */}
-                <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100">
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h3 className="text-lg font-black text-[#1B365D] tracking-tight">Acquisition</h3>
-                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-none mt-1">New Customer Growth</p>
-                        </div>
-                        <div className="px-3 py-1.5 bg-gray-50 rounded-lg text-[9px] font-black text-gray-400 uppercase">Success Rate</div>
-                    </div>
-                    <div className="h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={stats.customerTrends}>
-                                <defs>
-                                    <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#8CC63F" stopOpacity={0.3}/>
-                                        <stop offset="95%" stopColor="#8CC63F" stopOpacity={0}/>
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                                <XAxis 
-                                    dataKey="month" 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{fontSize: 10, fontWeight: 900, fill: '#CBD5E1'}}
-                                    dy={10}
-                                />
-                                <YAxis hide />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Area 
-                                    type="monotone" 
-                                    dataKey="count" 
-                                    stroke="#8CC63F" 
-                                    strokeWidth={4}
-                                    fillOpacity={1} 
-                                    fill="url(#colorCount)" 
-                                />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Upcoming Bookings List */}
-                <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100">
-                    <div className="flex items-center justify-between mb-8">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-gray-50 rounded-xl text-[#1B365D]">
-                                <Calendar size={20} />
-                            </div>
-                            <h3 className="text-lg font-black text-[#1B365D]">Upcoming Schedule</h3>
-                        </div>
-                        <a href="/schedule" className="text-[10px] font-black text-[#8CC63F] uppercase tracking-widest hover:underline">View All Schedule</a>
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white pb-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 sm:space-y-8">
+                
+                {/* Header Section */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 tracking-tight">
+                            Executive Dashboard
+                        </h1>
+                        <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1">
+                            Analytics & Operations Summary
+                        </p>
                     </div>
                     
-                    <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-white rounded-xl border border-gray-200 shadow-sm">
+                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                                Live Updates
+                            </span>
+                        </div>
+                        
+                        <button 
+                            onClick={handleRefresh}
+                            disabled={refreshing}
+                            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all disabled:opacity-50 text-sm font-medium text-gray-700"
+                        >
+                            <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+                            <span className="hidden sm:inline">Refresh</span>
+                        </button>
+                        
+                        {lastUpdated && (
+                            <span className="text-[10px] text-gray-400">
+                                Updated {lastUpdated.toLocaleTimeString()}
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                {/* Stats Grid - Responsive */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+                    <StatCard 
+                        title="Total Customers" 
+                        value={stats.totalCustomers?.toLocaleString() || 0} 
+                        icon={Users} 
+                        color="bg-gradient-to-br from-blue-500 to-blue-600" 
+                        delay={100}
+                    />
+                    <StatCard 
+                        title="Bookings This Month" 
+                        value={stats.bookingsThisMonth || 0} 
+                        icon={Zap} 
+                        color="bg-gradient-to-br from-green-500 to-green-600" 
+                        delay={200}
+                    />
+                    <StatCard 
+                        title="Upcoming Bookings" 
+                        value={stats.upcomingBookings || 0} 
+                        icon={TrendingUp} 
+                        color="bg-gradient-to-br from-indigo-500 to-indigo-600" 
+                        delay={300}
+                    />
+                    <StatCard 
+                        title="System Alerts" 
+                        value={stats.unreadNotifications || 0} 
+                        icon={Bell} 
+                        color="bg-gradient-to-br from-rose-500 to-rose-600" 
+                        delay={400}
+                    />
+                </div>
+
+                {/* Charts Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Service Volume Chart */}
+                    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-5 sm:p-6 transition-all hover:shadow-xl">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">Service Volume</h3>
+                                <p className="text-xs text-gray-500 font-medium mt-0.5">Monthly Booking Trends</p>
+                            </div>
+                            <div className="px-3 py-1.5 bg-gray-50 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-wider self-start sm:self-auto">
+                                Last 6 Months
+                            </div>
+                        </div>
+                        <div className="h-72 sm:h-80 w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={stats.bookingTrends || []}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                                    <XAxis 
+                                        dataKey="month" 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tick={{fontSize: 11, fontWeight: 600, fill: '#94A3B8'}}
+                                        dy={10}
+                                    />
+                                    <YAxis hide />
+                                    <Tooltip content={<CustomTooltip />} cursor={{fill: '#F8FAFC'}} />
+                                    <Bar dataKey="count" radius={[8, 8, 0, 0]} barSize={40}>
+                                        {(stats.bookingTrends || []).map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={index === 5 ? '#10B981' : '#3B82F6'} opacity={0.7 + (index * 0.05)} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* Customer Growth Chart */}
+                    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-5 sm:p-6 transition-all hover:shadow-xl">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">Customer Acquisition</h3>
+                                <p className="text-xs text-gray-500 font-medium mt-0.5">New Customer Growth</p>
+                            </div>
+                            <div className="px-3 py-1.5 bg-green-50 rounded-lg text-[10px] font-bold text-green-600 uppercase tracking-wider self-start sm:self-auto">
+                                +{stats.customerTrends?.[stats.customerTrends.length - 1]?.count || 0} this month
+                            </div>
+                        </div>
+                        <div className="h-72 sm:h-80 w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={stats.customerTrends || []}>
+                                    <defs>
+                                        <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
+                                            <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                                    <XAxis 
+                                        dataKey="month" 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tick={{fontSize: 11, fontWeight: 600, fill: '#94A3B8'}}
+                                        dy={10}
+                                    />
+                                    <YAxis hide />
+                                    <Tooltip content={<CustomTooltip />} />
+                                    <Area 
+                                        type="monotone" 
+                                        dataKey="count" 
+                                        stroke="#10B981" 
+                                        strokeWidth={3}
+                                        fillOpacity={1} 
+                                        fill="url(#colorCount)" 
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Upcoming Bookings Section */}
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-5 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-gray-100 rounded-xl text-gray-700">
+                                <Calendar size={20} />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">Upcoming Schedule</h3>
+                                <p className="text-xs text-gray-500 mt-0.5">Next {recentBookings.length} confirmed appointments</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="space-y-3">
                         {recentBookings.length > 0 ? (
                             recentBookings.map((booking, index) => (
-                                <div key={booking.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:border-[#8CC63F] transition-all group animate-in slide-in-from-right-4 duration-500 fill-mode-both" style={{animationDelay: `${index * 100}ms`}}>
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex flex-col items-center justify-center border border-gray-100">
-                                            <span className="text-[8px] font-black text-[#8CC63F] uppercase leading-none">{new Date(booking.booking_date).toLocaleDateString('default', { month: 'short' })}</span>
-                                            <span className="text-lg font-black text-[#1B365D] leading-tight">{new Date(booking.booking_date).toLocaleDateString('default', { day: 'numeric' })}</span>
-                                        </div>
-                                        <div>
-                                            <h4 className="font-black text-[#1B365D] text-sm group-hover:text-[#8CC63F] transition-colors">{booking.customer_name}</h4>
-                                            <div className="flex items-center gap-3 text-[10px] font-bold text-gray-400 uppercase tracking-tight">
-                                                <span className="flex items-center gap-1"><Clock size={10} /> {booking.start_time?.substring(0, 5)}</span>
-                                                <span className="flex items-center gap-1"><Briefcase size={10} /> Pest Control</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="hidden sm:block">
-                                        <span className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-[9px] font-black text-[#1B365D] uppercase tracking-widest">
-                                            Confirmed
-                                        </span>
-                                    </div>
-                                </div>
+                                <BookingItem key={booking.id} booking={booking} index={index} />
                             ))
                         ) : (
-                            <div className="text-center py-10 opacity-50">
-                                <CheckCircle2 size={32} className="mx-auto mb-2 text-gray-200" />
-                                <p className="text-xs font-black text-gray-400 uppercase tracking-widest">No upcoming services</p>
+                            <div className="text-center py-12">
+                                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <CheckCircle2 size={32} className="text-gray-400" />
+                                </div>
+                                <p className="text-sm font-medium text-gray-500">No upcoming appointments</p>
+                                <p className="text-xs text-gray-400 mt-1">New bookings will appear here</p>
                             </div>
                         )}
                     </div>

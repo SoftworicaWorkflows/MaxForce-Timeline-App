@@ -12,6 +12,7 @@ import BlockSlots from './pages/BlockSlots';
 import Settings from './pages/Settings';
 import ActivityLog from './pages/ActivityLog';
 import Dashboard from './pages/Dashboard';
+import Notifications from './pages/Notifications';
 import '../css/app.css';
 
 function App() {
@@ -49,6 +50,7 @@ function App() {
                         <Route path="/block" element={<BlockSlots />} />
                         <Route path="/settings" element={<Settings />} />
                         <Route path="/activity" element={<ActivityLog />} />
+                        <Route path="/notifications" element={<Notifications />} />
                     </Route>
                 )}
                 
