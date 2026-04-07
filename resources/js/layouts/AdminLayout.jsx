@@ -31,7 +31,13 @@ export default function AdminLayout() {
     const [currentTime, setCurrentTime] = useState(new Date());
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [upcomingCount, setUpcomingCount] = useState(0);
+    const [lastLogin, setLastLogin] = useState('');
     const location = useLocation();
+
+    useEffect(() => {
+        const loginTime = localStorage.getItem('lastLoginTime');
+        if (loginTime) setLastLogin(loginTime);
+    }, []);
 
     useEffect(() => {
         const fetchNavData = async () => {
@@ -89,14 +95,18 @@ export default function AdminLayout() {
                     isUserMenuOpen={isUserMenuOpen}
                     setIsUserMenuOpen={setIsUserMenuOpen}
                     upcomingCount={upcomingCount}
+                    lastLogin={lastLogin}
                 />
 
                 <LogoutModal
                     isOpen={isLogoutModalOpen}
                     onClose={() => setIsLogoutModalOpen(false)}
+                    userName="Admin User"
+                    lastLogin={lastLogin}
                     onConfirm={() => {
                         localStorage.removeItem('isLoggedIn');
                         localStorage.removeItem('lastLoginTime');
+                        localStorage.removeItem('userEmail');
                         window.location.href = '/';
                     }}
                 />
@@ -113,7 +123,8 @@ const SidebarAndMain = ({
     currentTime,
     isUserMenuOpen,
     setIsUserMenuOpen,
-    upcomingCount
+    upcomingCount,
+    lastLogin
 }) => {
     return (
         <>
@@ -245,6 +256,17 @@ const SidebarAndMain = ({
                                         minute: '2-digit', 
                                         second: '2-digit' 
                                     })}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Last Login Badge */}
+                        <div className="hidden xl:flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-xl border border-gray-100">
+                            <Clock size={16} className="text-blue-500" />
+                            <div>
+                                <p className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Last Login</p>
+                                <p className="text-[11px] font-bold text-gray-700">
+                                    {lastLogin || 'Just now'}
                                 </p>
                             </div>
                         </div>
