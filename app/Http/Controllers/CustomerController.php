@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -37,6 +38,14 @@ class CustomerController extends Controller
             'phone' => $validated['phone'],
             'email' => $validated['email'] ?? null,
             'address' => $validated['address'] ?? null,
+        ]);
+
+        // Trigger real-time notification
+        Notification::create([
+            'type' => 'success',
+            'title' => 'New Customer Registered',
+            'message' => "Customer {$customer->name} has been successfully added to the system.",
+            'is_read' => false
         ]);
 
         return response()->json([
@@ -82,7 +91,7 @@ class CustomerController extends Controller
     public function getStats($id): JsonResponse
     {
         $customer = Customer::with(['bookings' => function($query) {
-            $query->orderBy('booking_date', 'desc')->orderBy('booking_time', 'desc');
+            $query->orderBy('booking_date', 'desc')->orderBy('start_time', 'desc');
         }])->find($id);
 
         if (!$customer) {
@@ -97,6 +106,28 @@ class CustomerController extends Controller
                 'latest_service' => $customer->bookings->first(),
                 'history' => $customer->bookings
             ]
+        ]);
+    }
+
+    /**
+     * Delete a customer
+     */
+    public function destroy($id): JsonResponse
+    {
+        $customer = Customer::find($id);
+
+        if (!$customer) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Customer not found'
+            ], 404);
+        }
+
+        $customer->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Customer deleted successfully'
         ]);
     }
 }

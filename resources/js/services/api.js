@@ -37,11 +37,17 @@ export const createBooking = async (bookingData) => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
             },
             body: JSON.stringify(bookingData),
         });
-        return await response.json();
+        
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || 'Validation failed');
+        }
+        return data;
     } catch (error) {
         console.error('Error creating booking:', error);
         throw error;
@@ -62,6 +68,26 @@ export const getSuggestions = async (date, time) => {
 };
 
 /**
+ * Check if a time slot is available
+ */
+export const checkAvailability = async (date, start, end, excludeId = null) => {
+    try {
+        const query = new URLSearchParams({
+            date,
+            start_time: start,
+            end_time: end
+        });
+        if (excludeId) query.append('exclude_id', excludeId);
+        
+        const response = await fetch(`${API_BASE_URL}/check-availability?${query}`);
+        return await response.json();
+    } catch (error) {
+        console.error('Error checking availability:', error);
+        throw error;
+    }
+};
+
+/**
  * Delete a booking (admin)
  */
 export const deleteBooking = async (id) => {
@@ -69,10 +95,13 @@ export const deleteBooking = async (id) => {
         const response = await fetch(`${API_BASE_URL}/${id}`, {
             method: 'DELETE',
             headers: {
+                'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
             },
         });
-        return await response.json();
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Deletion failed');
+        return data;
     } catch (error) {
         console.error('Error deleting booking:', error);
         throw error;
@@ -82,17 +111,20 @@ export const deleteBooking = async (id) => {
 /**
  * Block a time slot (admin)
  */
-export const blockTimeSlot = async (date, time) => {
+export const blockTimeSlot = async (date, start_time, end_time) => {
     try {
         const response = await fetch(`${API_BASE_URL}/block`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
             },
-            body: JSON.stringify({ booking_date: date, booking_time: time }),
+            body: JSON.stringify({ booking_date: date, start_time, end_time }),
         });
-        return await response.json();
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Blocking failed');
+        return data;
     } catch (error) {
         console.error('Error blocking time slot:', error);
         throw error;
@@ -108,11 +140,14 @@ export const updateBooking = async (id, bookingData) => {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
             },
             body: JSON.stringify(bookingData),
         });
-        return await response.json();
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Update failed');
+        return data;
     } catch (error) {
         console.error('Error updating booking:', error);
         throw error;
@@ -185,6 +220,56 @@ export const updateCustomer = async (id, customerData) => {
 };
 
 /**
+ * Delete a customer
+ */
+export const deleteCustomer = async (id) => {
+    try {
+        const response = await fetch(`/api/customers/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+            },
+        });
+        
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || 'Deletion failed');
+        }
+        return data;
+    } catch (error) {
+        console.error('Error deleting customer:', error);
+        throw error;
+    }
+};
+
+/**
+ * Update user password
+ */
+export const updatePassword = async (passwords) => {
+    try {
+        const response = await fetch('/api/settings/password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+            },
+            body: JSON.stringify(passwords),
+        });
+        
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || 'Verification failed');
+        }
+        return data;
+    } catch (error) {
+        console.error('Error updating password:', error);
+        throw error;
+    }
+};
+
+/**
  * Get customer stats and history
  */
 export const getCustomerStats = async (id) => {
@@ -193,6 +278,58 @@ export const getCustomerStats = async (id) => {
         return await response.json();
     } catch (error) {
         console.error('Error fetching customer stats:', error);
+        throw error;
+    }
+};
+
+/**
+ * Get recent notifications
+ */
+export const getNotifications = async (all = false, page = 1) => {
+    try {
+        const url = all ? `/api/notifications?all=true&page=${page}` : '/api/notifications';
+        const response = await fetch(url);
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching notifications:', error);
+        throw error;
+    }
+};
+
+/**
+ * Mark a notification as read
+ */
+export const markNotificationAsRead = async (id) => {
+    try {
+        const response = await fetch(`/api/notifications/${id}/read`, {
+            method: 'PUT',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+            },
+        });
+        return await response.json();
+    } catch (error) {
+        console.error('Error marking notification as read:', error);
+        throw error;
+    }
+};
+
+/**
+ * Mark all notifications as read
+ */
+export const markAllNotificationsAsRead = async () => {
+    try {
+        const response = await fetch('/api/notifications/read-all', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+            },
+        });
+        return await response.json();
+    } catch (error) {
+        console.error('Error marking all notifications as read:', error);
         throw error;
     }
 };

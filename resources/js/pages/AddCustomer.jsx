@@ -61,7 +61,7 @@ export default function AddCustomer() {
                         <Shield size={24} className="text-[#8CC63F]" />
                     </div>
                     <div>
-                        <h2 className="text-3xl font-black text-[#1B365D] tracking-tight">Register Customer</h2>
+                        <h2 className="text-3xl font-black text-[#1B365D] tracking-tight">Add Customer</h2>
                         <p className="text-xs text-gray-500 font-medium tracking-wider mt-1">
                             Add a new pest control service booking
                         </p>

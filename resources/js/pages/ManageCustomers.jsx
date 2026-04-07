@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getCustomers } from '../services/api';
+import { getCustomers, deleteCustomer } from '../services/api';
 import { User, Phone, Mail, MapPin, Search, Plus, Filter, MoreVertical, ExternalLink, Edit3, PieChart, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import EditCustomerModal from '../components/EditCustomerModal';
@@ -39,6 +39,18 @@ export default function ManageCustomers() {
     const handleViewStats = (customer) => {
         setSelectedCustomer(customer);
         setIsStatsModalOpen(true);
+    };
+
+    const handleDeleteCustomer = async (id) => {
+        if (window.confirm('Are you sure you want to delete this customer? This will NOT delete their service history, but the records will no longer be linked to this profile.')) {
+            try {
+                await deleteCustomer(id);
+                fetchCustomers();
+            } catch (error) {
+                console.error('Error deleting customer:', error);
+                alert(error.message || 'Failed to delete customer.');
+            }
+        }
     };
 
     const filteredCustomers = customers.filter(customer => 
@@ -166,7 +178,11 @@ export default function ManageCustomers() {
                                                 >
                                                     <Edit3 size={16} />
                                                 </button>
-                                                <button className="p-2.5 bg-gray-50 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all">
+                                                <button 
+                                                    onClick={() => handleDeleteCustomer(customer.id)}
+                                                    className="p-2.5 bg-gray-50 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all"
+                                                    title="Delete Customer"
+                                                >
                                                     <Trash2 size={16} />
                                                 </button>
                                             </div>

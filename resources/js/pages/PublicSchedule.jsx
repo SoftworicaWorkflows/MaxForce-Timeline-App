@@ -1,74 +1,66 @@
 import React, { useState, useEffect } from 'react';
-import { getSchedule, getBookings as getAllBookings } from '../services/api';
-import TimeSlots from '../components/TimeSlots.jsx';
+import { getSchedule, getBookings as getAllBookings, deleteBooking } from '../services/api';
 import BookingModal from '../components/BookingModal.jsx';
 import { 
     Calendar, 
     Clock, 
-    Shield, 
-    CheckCircle, 
-    AlertCircle,
+    Shield,
     ChevronLeft,
     ChevronRight,
     Users,
     MapPin,
     Phone,
     Mail,
-    XCircle,
-    Menu as MenuIcon
+    Menu as MenuIcon,
+    Trash2,
+    Plus
 } from 'lucide-react';
 
 export default function PublicSchedule() {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-    const [slots, setSlots] = useState([]);
     const [allBookings, setAllBookings] = useState([]);
     const [loadingSchedule, setLoadingSchedule] = useState(false);
-    const [selectedSlot, setSelectedSlot] = useState(null);
     const [showModal, setShowModal] = useState(false);
-    const [availableCount, setAvailableCount] = useState(0);
     const [viewMode, setViewMode] = useState('schedule');
     const [filterType, setFilterType] = useState('all');
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     useEffect(() => {
-        fetchSchedule(selectedDate);
         fetchAllBookings();
     }, [selectedDate]);
 
-    const fetchSchedule = async (date) => {
-        setLoadingSchedule(true);
-        try {
-            const response = await getSchedule(date);
-            const availableSlots = response.slots || [];
-            setSlots(availableSlots);
-            setAvailableCount(availableSlots.filter(slot => slot.is_available).length);
-        } catch (error) {
-            console.error('Error fetching schedule:', error);
-            setAvailableCount(0);
-        } finally {
-            setLoadingSchedule(false);
-        }
-    };
-
     const fetchAllBookings = async () => {
+        setLoadingSchedule(true);
         try {
             const response = await getAllBookings();
             setAllBookings(response.bookings || []);
         } catch (error) {
             console.error('Error fetching bookings:', error);
+        } finally {
+            setLoadingSchedule(false);
         }
     };
 
-    const handleSlotSelect = (slot) => { 
-        setSelectedSlot(slot); 
+    const handleAddBooking = () => { 
         setShowModal(true); 
     };
     
     const handleBookingSuccess = () => {
-        fetchSchedule(selectedDate);
         fetchAllBookings();
         setShowModal(false);
+    };
+
+    const handleDeleteBooking = async (id) => {
+        if (window.confirm('Are you sure you want to delete this booking?')) {
+            try {
+                await deleteBooking(id);
+                fetchAllBookings();
+            } catch (error) {
+                console.error('Error deleting booking:', error);
+                alert('Failed to delete booking.');
+            }
+        }
     };
 
     const goToPreviousMonth = () => {
@@ -117,7 +109,7 @@ export default function PublicSchedule() {
 
     const getBookingsForDate = (date) => {
         const dateStr = date.toISOString().split('T')[0];
-        return allBookings.filter(booking => booking.booking_date === dateStr);
+        return allBookings.filter(booking => booking.booking_date && booking.booking_date.split('T')[0] === dateStr);
     };
 
     const getFilteredBookings = () => {
@@ -125,28 +117,27 @@ export default function PublicSchedule() {
         
         switch(filterType) {
             case 'past':
-                return allBookings.filter(booking => booking.booking_date < today);
+                return allBookings.filter(booking => booking.booking_date && booking.booking_date.split('T')[0] < today);
             case 'future':
-                return allBookings.filter(booking => booking.booking_date > today);
+                return allBookings.filter(booking => booking.booking_date && booking.booking_date.split('T')[0] > today);
             case 'today':
-                return allBookings.filter(booking => booking.booking_date === today);
+                return allBookings.filter(booking => booking.booking_date && booking.booking_date.split('T')[0] === today);
             default:
                 return allBookings;
         }
     };
 
     const filteredBookings = getFilteredBookings();
+    const todaysBookings = getBookingsForDate(new Date(selectedDate));
 
-    const getUrgencyMessage = () => {
-        if (availableCount <= 3 && availableCount > 0) {
-            return { text: "⚠️ Only a few slots left!", color: "text-[#8CC63F]" };
-        } else if (availableCount === 0 && !loadingSchedule) {
-            return { text: "📅 No slots available", color: "text-gray-400" };
-        }
-        return { text: `🎯 ${availableCount} slots available`, color: "text-gray-500" };
+    // Helper to format time strings from 09:00:00 to 09:00 AM
+    const formatTime = (timeStr) => {
+        if (!timeStr) return '';
+        const [hour, min] = timeStr.split(':');
+        const d = new Date();
+        d.setHours(hour, min);
+        return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     };
-
-    const urgency = getUrgencyMessage();
 
     return (
         <div className="w-full max-w-full overflow-x-hidden bg-gradient-to-br from-gray-50 to-gray-100">
@@ -212,6 +203,13 @@ export default function PublicSchedule() {
                                 <Users size={16} className="inline mr-2" />
                                 Bookings
                             </button>
+                            <button
+                                onClick={handleAddBooking}
+                                className="ml-4 px-6 py-2.5 bg-[#8CC63F] text-[#1B365D] rounded-xl font-black text-sm hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2 border-2 border-[#8CC63F]"
+                            >
+                                <Plus size={18} />
+                                Schedule Now
+                            </button>
                         </div>
                     </div>
 
@@ -248,6 +246,16 @@ export default function PublicSchedule() {
                             </button>
                         </div>
                     )}
+                    
+                    <div className="md:hidden mt-3">
+                        <button
+                            onClick={handleAddBooking}
+                            className="w-full py-4 bg-[#8CC63F] text-[#1B365D] rounded-xl font-black text-xs uppercase tracking-widest hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                        >
+                            <Plus size={16} />
+                            Schedule New Appointment
+                        </button>
+                    </div>
                 </div>
 
                 {viewMode === 'schedule' ? (
@@ -261,7 +269,7 @@ export default function PublicSchedule() {
                                             {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
                                         </h3>
                                         <p className="text-white/70 text-xs sm:text-sm mt-1">
-                                            Select a date to view slots
+                                            Select a date to view and manage appointments
                                         </p>
                                     </div>
                                     <div className="flex gap-2">
@@ -321,7 +329,7 @@ export default function PublicSchedule() {
                                                     ${isSelected 
                                                         ? 'bg-[#1B365D] text-white z-10 shadow-inner' 
                                                         : isCurrentMonth 
-                                                            ? 'hover:bg-gray-50 text-gray-700' 
+                                                            ? hasBookings ? 'bg-[#8CC63F]/15 text-[#1B365D] hover:bg-[#8CC63F]/25 font-bold' : 'hover:bg-gray-50 text-gray-700' 
                                                             : 'text-gray-200 cursor-not-allowed opacity-40 bg-gray-50/30'
                                                     }
                                                     ${isToday && !isSelected ? 'ring-inset ring-2 ring-[#8CC63F]' : ''}
@@ -361,55 +369,58 @@ export default function PublicSchedule() {
                                 </div>
                                 <div className="flex gap-2">
                                     <button 
-                                        onClick={() => handleSlotSelect({ time: '09:00', label: 'Morning' })}
-                                        className="px-3 py-1.5 bg-[#1B365D] text-white text-[10px] font-black rounded-lg hover:shadow-lg transition-all"
+                                        onClick={handleAddBooking}
+                                        className="px-3 py-1.5 bg-[#1B365D] text-white text-[10px] sm:text-xs font-black rounded-lg hover:shadow-lg transition-all flex items-center gap-1"
                                     >
-                                        + Quick Booking
+                                        <span>+ Add Booking</span>
                                     </button>
                                 </div>
                             </div>
                         </div>
-
-                        {/* Time Slots Section */}
+                        
+                        {/* Day Schedule Summary */}
                         <div>
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <Clock size={14} className="text-[#8CC63F] sm:w-4 sm:h-4" />
-                                        <h3 className="text-lg sm:text-2xl font-black text-[#1B365D]">
-                                            Available Slots
-                                        </h3>
-                                    </div>
-                                    <p className="text-[10px] sm:text-xs text-gray-400 font-bold uppercase flex items-center gap-2">
-                                        <span className={`inline-block w-1.5 h-1.5 rounded-full ${availableCount > 0 ? 'bg-[#8CC63F] animate-pulse' : 'bg-gray-300'}`}></span>
-                                        {loadingSchedule ? "Loading..." : urgency.text}
-                                    </p>
-                                </div>
-                                
-                                {availableCount > 0 && availableCount <= 5 && (
-                                    <div className="flex items-center gap-1 sm:gap-2 bg-[#8CC63F]/10 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full">
-                                        <AlertCircle size={10} className="text-[#8CC63F] sm:w-3 sm:h-3" />
-                                        <span className="text-[8px] sm:text-[9px] font-black text-[#1B365D]">
-                                            Limited slots!
-                                        </span>
-                                    </div>
-                                )}
+                            <div className="flex items-center gap-2 mb-4">
+                                <Clock size={16} className="text-[#1B365D]" />
+                                <h3 className="text-lg font-black text-[#1B365D]">Bookings on this day</h3>
                             </div>
                             
-                            <TimeSlots 
-                                slots={slots} 
-                                onSlotSelect={handleSlotSelect} 
-                                loading={loadingSchedule} 
-                            />
-                            
-                            {!loadingSchedule && availableCount === 0 && (
-                                <div className="text-center py-8 sm:py-12 bg-gray-50 rounded-xl sm:rounded-2xl">
-                                    <XCircle size={32} className="text-gray-300 mx-auto mb-2 sm:w-12 sm:h-12" />
-                                    <p className="text-gray-400 font-medium text-sm sm:text-base">No slots available</p>
-                                    <p className="text-xs text-gray-400 mt-1">Please select another date</p>
+                            {loadingSchedule ? (
+                                <p className="text-gray-400 text-sm">Loading...</p>
+                            ) : todaysBookings.length === 0 ? (
+                                <div className="bg-white p-6 rounded-xl border border-gray-100 text-center text-sm text-gray-500">
+                                    No bookings scheduled for this date. Click 'Add Booking' to schedule one.
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {todaysBookings.map(booking => (
+                                        <div key={booking.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+                                            <div>
+                                                <h4 className="font-bold text-[#1B365D]">{booking.customer_name}</h4>
+                                                <p className="text-xs text-gray-500">{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</p>
+                                                {booking.status === 'blocked' && (
+                                                    <span className="mt-1 inline-block bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded font-bold">Blocked Time</span>
+                                                )}
+                                            </div>
+                                            <div className="text-right flex items-center gap-3">
+                                                <div>
+                                                    <p className="text-xs text-gray-600 font-bold">{booking.phone_number !== 'N/A' ? booking.phone_number : ''}</p>
+                                                    <p className="text-[10px] text-gray-400 capitalize">{booking.status}</p>
+                                                </div>
+                                                <button 
+                                                    onClick={() => handleDeleteBooking(booking.id)}
+                                                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                    title="Delete Booking"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </div>
+
                     </>
                 ) : (
                     /* Bookings View */
@@ -449,8 +460,9 @@ export default function PublicSchedule() {
                             ) : (
                                 <div className="space-y-3 sm:space-y-4">
                                     {filteredBookings.map((booking, index) => {
-                                        const isPast = booking.booking_date < new Date().toISOString().split('T')[0];
-                                        const isToday = booking.booking_date === new Date().toISOString().split('T')[0];
+                                        const bDate = booking.booking_date ? booking.booking_date.split('T')[0] : '';
+                                        const isPast = bDate < new Date().toISOString().split('T')[0];
+                                        const isToday = bDate === new Date().toISOString().split('T')[0];
                                         
                                         return (
                                             <div key={index} className={`
@@ -472,28 +484,41 @@ export default function PublicSchedule() {
                                                                 {isPast ? 'Completed' : isToday ? 'Today' : 'Upcoming'}
                                                             </span>
                                                         </div>
-                                                        <div className="bg-[#1B365D] text-white px-2 py-0.5 rounded text-[9px] sm:text-xs font-black">
-                                                            #{booking.id || index + 1}
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="bg-[#1B365D] text-white px-2 py-0.5 rounded text-[9px] sm:text-xs font-black">
+                                                                #{booking.id || index + 1}
+                                                            </div>
+                                                            <button 
+                                                                onClick={() => handleDeleteBooking(booking.id)}
+                                                                className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
                                                         </div>
                                                     </div>
                                                     
-                                                    <h4 className="text-sm sm:text-lg font-black text-[#1B365D] break-words">
+                                                    <h4 className="text-sm sm:text-lg font-black text-[#1B365D] break-words flex items-center gap-2">
                                                         {booking.customer_name}
+                                                        {booking.status === 'blocked' && (
+                                                            <span className="bg-red-100 text-red-700 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Blocked</span>
+                                                        )}
                                                     </h4>
                                                     
                                                     <div className="space-y-1 text-xs sm:text-sm text-gray-600">
                                                         <div className="flex items-center gap-2 flex-wrap">
                                                             <Calendar size={12} className="text-[#8CC63F]" />
-                                                            <span>{booking.booking_date}</span>
+                                                            <span>{booking.booking_date ? booking.booking_date.split('T')[0] : ''}</span>
                                                             <Clock size={12} className="text-[#8CC63F] ml-1" />
-                                                            <span>{booking.booking_time}</span>
+                                                            <span>{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</span>
                                                         </div>
-                                                        <div className="flex items-center gap-2 flex-wrap">
-                                                            <Phone size={12} className="text-[#8CC63F]" />
-                                                            <span className="break-words">{booking.phone_number}</span>
-                                                            <Mail size={12} className="text-[#8CC63F] ml-1" />
-                                                            <span className="break-words">{booking.email}</span>
-                                                        </div>
+                                                        {booking.status !== 'blocked' && (
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <Phone size={12} className="text-[#8CC63F]" />
+                                                                <span className="break-words">{booking.phone_number}</span>
+                                                                <Mail size={12} className="text-[#8CC63F] ml-1" />
+                                                                <span className="break-words">{booking.email}</span>
+                                                            </div>
+                                                        )}
                                                         {booking.service_notes && (
                                                             <div className="flex items-start gap-2 text-gray-500 mt-1">
                                                                 <MapPin size={12} className="text-[#8CC63F] mt-0.5 flex-shrink-0" />
@@ -514,7 +539,6 @@ export default function PublicSchedule() {
                 {/* Booking Modal */}
                 <BookingModal 
                     isOpen={showModal} 
-                    slot={selectedSlot} 
                     selectedDate={selectedDate} 
                     onClose={() => setShowModal(false)} 
                     onBookingSuccess={handleBookingSuccess} 

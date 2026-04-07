@@ -14,6 +14,7 @@
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
         <!-- Vite Assets (includes Tailwind via PostCSS) -->
+        @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.jsx'])
     </head>
     <body class="bg-gray-50 text-gray-800 m-0 p-0">

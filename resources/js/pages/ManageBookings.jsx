@@ -6,6 +6,11 @@ export default function ManageBookings() {
     const [bookings, setBookings] = useState([]);
     const [loadingAdmin, setLoadingAdmin] = useState(false);
     const [editingBooking, setEditingBooking] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    
+    const itemsPerPage = 8;
+    const totalPages = Math.ceil(bookings.length / itemsPerPage);
+    const currentBookings = bookings.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     useEffect(() => {
         fetchAdminBookings();
@@ -42,7 +47,7 @@ export default function ManageBookings() {
         <div className="animate-in fade-in slide-in-from-right-4 duration-500 pt-4">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
                 <div>
-                    <h2 className="text-3xl font-black text-max-navy tracking-tight mb-2">Master Roster</h2>
+                    <h2 className="text-3xl font-black text-max-navy tracking-tight mb-2">Customer Schedule</h2>
                     <p className="text-xs text-gray-400 font-medium tracking-widest uppercase">Overview of all chronological events</p>
                 </div>
                 <div className="flex gap-3">
@@ -66,31 +71,31 @@ export default function ManageBookings() {
                                 <tr className="bg-gray-50 border-b border-gray-100">
                                     <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Date & Time</th>
                                     <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Customer</th>
-                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Contact</th>
-                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Services/Note</th>
                                     <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {bookings.map((booking) => (
+                                {currentBookings.map((booking) => (
                                     <tr key={booking.id} className="border-b border-gray-50 hover:bg-gray-50">
                                         <td className="px-6 py-4">
-                                            <div className="text-sm font-bold text-max-navy">{booking.booking_date}</div>
-                                            <div className="text-xs text-gray-500 font-medium">{booking.booking_time}</div>
+                                            <div className="text-sm font-bold text-max-navy">{booking.booking_date ? booking.booking_date.split('T')[0] : ''}</div>
+                                            <div className="text-xs text-gray-500 font-medium">
+                                                {booking.start_time ? booking.start_time.substring(0, 5) : ''} - {booking.end_time ? booking.end_time.substring(0, 5) : ''}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-sm font-bold text-gray-700">{booking.customer_name}</div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="text-xs text-gray-600 flex items-center gap-2 mb-1"><Phone size={10} className="opacity-50"/> {booking.phone_number || '-'}</div>
-                                            <div className="text-xs text-gray-600 flex items-center gap-2"><Mail size={10} className="opacity-50"/> {booking.email || '-'}</div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${
-                                                booking.status === 'booked' ? 'bg-max-lime bg-opacity-20 text-max-navy' : 'bg-red-50 text-red-600'
-                                            }`}>
-                                                {booking.status}
-                                            </span>
+                                            <div className="text-xs text-gray-600 font-bold max-w-xs truncate">{booking.service_notes || 'General Service'}</div>
+                                            <div className="mt-1 flex items-center gap-2">
+                                                <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${
+                                                    booking.status === 'booked' ? 'bg-max-lime bg-opacity-20 text-max-navy' : 'bg-red-50 text-red-600'
+                                                }`}>
+                                                    {booking.status}
+                                                </span>
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
@@ -107,6 +112,39 @@ export default function ManageBookings() {
                             </tbody>
                         </table>
                     </div>
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                        <div className="p-4 border-t border-gray-100 flex items-center justify-between bg-gray-50">
+                            <span className="text-xs font-bold text-gray-500">
+                                Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, bookings.length)} of {bookings.length} entries
+                            </span>
+                            <div className="flex gap-1 overflow-x-auto hide-scrollbar">
+                                <button 
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                    className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-black text-gray-600 disabled:opacity-50 hover:bg-gray-100 transition-all"
+                                >
+                                    Prev
+                                </button>
+                                {Array.from({ length: totalPages }).map((_, i) => (
+                                    <button 
+                                        key={i} 
+                                        onClick={() => setCurrentPage(i + 1)}
+                                        className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-black transition-all ${currentPage === i + 1 ? 'bg-[#1B365D] text-[#8CC63F] shadow-md border-transparent' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'}`}
+                                    >
+                                        {i + 1}
+                                    </button>
+                                ))}
+                                <button 
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                    className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-black text-gray-600 disabled:opacity-50 hover:bg-gray-100 transition-all"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -124,11 +162,15 @@ export default function ManageBookings() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Date</label>
-                                    <input type="date" required value={editingBooking.booking_date} onChange={e => setEditingBooking({...editingBooking, booking_date: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold" />
+                                    <input type="date" required value={editingBooking.booking_date ? editingBooking.booking_date.split('T')[0] : ''} onChange={e => setEditingBooking({...editingBooking, booking_date: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold" />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Time</label>
-                                    <input type="time" required value={editingBooking.booking_time} onChange={e => setEditingBooking({...editingBooking, booking_time: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold" />
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Time (Start - End)</label>
+                                    <div className="flex items-center gap-1">
+                                        <input type="time" required value={editingBooking.start_time || ''} onChange={e => setEditingBooking({...editingBooking, start_time: e.target.value})} className="w-full px-2 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold" />
+                                        <span className="text-gray-400">-</span>
+                                        <input type="time" required value={editingBooking.end_time || ''} onChange={e => setEditingBooking({...editingBooking, end_time: e.target.value})} className="w-full px-2 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold" />
+                                    </div>
                                 </div>
                             </div>
                             <div>
@@ -152,6 +194,16 @@ export default function ManageBookings() {
                                     <option value="blocked">Blocked</option>
                                     <option value="available">Available</option>
                                 </select>
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Multiple Services Message</label>
+                                <textarea 
+                                    rows="3"
+                                    value={editingBooking.service_notes} 
+                                    onChange={e => setEditingBooking({...editingBooking, service_notes: e.target.value})} 
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-medium resize-none"
+                                    placeholder="Enter multiple services or specific customer messages here..."
+                                />
                             </div>
                             <button type="submit" className="w-full mt-4 bg-max-lime text-max-navy py-4 rounded-xl font-black uppercase tracking-widest hover:brightness-110 shadow-lg text-xs">
                                 Save Changes

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Clock, MapPin, TrendingUp, History, ClipboardCheck, Loader2, ExternalLink } from 'lucide-react';
-import { getCustomerStats } from '../services/api';
+import { X, Calendar, Clock, MapPin, TrendingUp, History, ClipboardCheck, Loader2, ExternalLink, Plus } from 'lucide-react';
+import { getCustomerStats, createBooking } from '../services/api';
 
 const StatCard = ({ icon: Icon, label, value, colorClass }) => (
     <div className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center justify-between shadow-sm">
@@ -43,6 +43,14 @@ export default function CustomerStatsModal({ isOpen, customer, onClose }) {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [newService, setNewService] = useState({
+        service_notes: ''
+    });
+    const [submittingService, setSubmittingService] = useState(false);
+    const [showAdded, setShowAdded] = useState(false);
+    const [addError, setAddError] = useState('');
+
     useEffect(() => {
         if (isOpen && customer) {
             fetchStats();
@@ -58,6 +66,46 @@ export default function CustomerStatsModal({ isOpen, customer, onClose }) {
             console.error('Failed to load stats');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleAddService = async (e) => {
+        e.preventDefault();
+        setSubmittingService(true);
+        try {
+            const today = new Date();
+            const currentDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            
+            const startHour = String(today.getHours()).padStart(2, '0');
+            const startMin = String(today.getMinutes()).padStart(2, '0');
+            const endHour = String((today.getHours() + 1) % 24).padStart(2, '0');
+            
+            const generatedStartTime = `${startHour}:${startMin}`;
+            const generatedEndTime = `${endHour}:${startMin}`;
+            
+            await createBooking({
+                customer_id: customer.id,
+                customer_name: customer.name,
+                phone_number: customer.phone,
+                email: customer.email || 'noemail@example.com',
+                address: customer.address || 'No Address Provided',
+                booking_date: currentDate,
+                start_time: generatedStartTime,
+                end_time: generatedEndTime,
+                service_notes: newService.service_notes
+            });
+            
+            setShowAdded(true);
+            setTimeout(() => setShowAdded(false), 2000);
+            
+            // Keeping form open for adding multiple services
+            setStats(null); // Force reload
+            fetchStats();
+        } catch (err) {
+            setAddError(err.message || 'Failed to add service');
+            setTimeout(() => setAddError(''), 5000);
+        } finally {
+            setSubmittingService(false);
         }
     };
 
@@ -134,10 +182,41 @@ export default function CustomerStatsModal({ isOpen, customer, onClose }) {
                                 <div className="flex items-center justify-between mb-4 px-2">
                                     <h4 className="flex items-center gap-2 text-[#1B365D] font-black text-sm uppercase tracking-wider">
                                         <History size={16} className="text-[#8CC63F]" />
-                                        Service Timeline
+                                        {showAddForm ? 'Add New Service' : 'Service Timeline'}
                                     </h4>
-                                    <span className="text-[9px] font-black bg-gray-100 text-gray-400 px-3 py-1 rounded-full">{stats?.stats?.history.length || 0} Records</span>
+                                    {!showAddForm && (
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-[9px] font-black bg-gray-100 text-gray-400 px-3 py-1 rounded-full">{stats?.stats?.history.length || 0} Records</span>
+                                            <button onClick={() => setShowAddForm(true)} className="text-[10px] bg-[#8CC63F] text-[#1B365D] px-3 py-1.5 rounded-lg font-black uppercase tracking-wider hover:shadow-md transition-all flex items-center gap-1">
+                                                <Plus size={12} /> Add
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
+
+                                {showAddForm && (
+                                    <div className="space-y-4">
+                                        {addError && (
+                                            <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-xs font-bold rounded-xl flex items-center gap-2 animate-in shake duration-300">
+                                                <AlertCircle size={14} />
+                                                {addError}
+                                            </div>
+                                        )}
+                                        <form onSubmit={handleAddService} className="space-y-4 bg-white p-5 rounded-2xl border border-gray-100 mb-4 animate-in fade-in slide-in-from-top-2">
+                                        <div>
+                                            <label className="block text-[10px] font-black tracking-wider text-gray-500 uppercase mb-2">Service Notes</label>
+                                            <input type="text" placeholder="Add any details here..." value={newService.service_notes} onChange={e => setNewService({...newService, service_notes: e.target.value})} className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#8CC63F] font-semibold" />
+                                        </div>
+                                        <div className="flex gap-2 pt-2">
+                                            <button type="submit" disabled={submittingService} className={`flex-1 ${showAdded ? 'bg-green-500 text-white' : 'bg-[#8CC63F] text-[#1B365D]'} font-black uppercase text-xs tracking-wider py-3 rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2`}>
+                                                {submittingService ? <Loader2 size={14} className="animate-spin" /> : (showAdded ? <ClipboardCheck size={14} /> : <Plus size={14} />)}
+                                                {showAdded ? 'Added!' : 'Save Service'}
+                                            </button>
+                                            <button type="button" onClick={() => setShowAddForm(false)} className="px-4 bg-gray-100 text-gray-500 font-black uppercase text-xs tracking-wider rounded-xl hover:bg-gray-200 transition-all">Cancel</button>
+                                        </div>
+                                    </form>
+                                    </div>
+                                )}
 
                                 <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 scrollbar-thin">
                                     {stats?.stats?.history.length > 0 ? (
@@ -155,7 +234,7 @@ export default function CustomerStatsModal({ isOpen, customer, onClose }) {
                                                         <div className="flex items-center gap-3">
                                                             <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400">
                                                                 <Clock size={10} />
-                                                                {booking.booking_time.substring(0, 5)}
+                                                                {booking.start_time ? booking.start_time.substring(0, 5) : ''} - {booking.end_time ? booking.end_time.substring(0, 5) : ''}
                                                             </div>
                                                             <span className="text-[10px] font-black text-[#8CC63F] uppercase tracking-widest px-2 py-0.5 bg-[#8CC63F]/10 rounded-lg">Pest Control</span>
                                                         </div>

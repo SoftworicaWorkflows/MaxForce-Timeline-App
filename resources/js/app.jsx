@@ -9,6 +9,8 @@ import ManageBookings from './pages/ManageBookings';
 import AddCustomer from './pages/AddCustomer';
 import ManageCustomers from './pages/ManageCustomers';
 import BlockSlots from './pages/BlockSlots';
+import Settings from './pages/Settings';
+import ActivityLog from './pages/ActivityLog';
 import '../css/app.css';
 
 function App() {
@@ -43,6 +45,8 @@ function App() {
                         <Route path="/customers" element={<ManageCustomers />} />
                         <Route path="/create" element={<AddCustomer />} />
                         <Route path="/block" element={<BlockSlots />} />
+                        <Route path="/settings" element={<Settings />} />
+                        <Route path="/activity" element={<ActivityLog />} />
                     </Route>
                 )}
                 
