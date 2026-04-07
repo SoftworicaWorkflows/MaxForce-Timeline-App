@@ -65,7 +65,7 @@ class BookingController extends Controller
     {
         $date = $request->query('date', now()->format('Y-m-d'));
         
-        $bookings = Booking::forDate($date)->orderBy('start_time')->get();
+        $bookings = Booking::whereDate('booking_date', $date)->orderBy('start_time')->get();
 
         return response()->json([
             'date' => $date,
@@ -82,7 +82,7 @@ class BookingController extends Controller
         $query = Booking::query();
 
         if ($request->filled('date')) {
-            $query->where('booking_date', $request->query('date'));
+            $query->whereDate('booking_date', $request->query('date'));
         }
 
         if ($request->filled('status')) {
@@ -286,12 +286,17 @@ class BookingController extends Controller
     
     private function hasOverlap($date, $start, $end, $excludeId = null)
     {
-        $query = Booking::where('booking_date', $date)
+        $startStr = \Carbon\Carbon::parse($start)->format('H:i');
+        $endStr = \Carbon\Carbon::parse($end)->format('H:i');
+        $dateStr = \Carbon\Carbon::parse($date)->format('Y-m-d');
+
+        $query = Booking::where(\DB::raw("date(booking_date)"), $dateStr)
             ->where('status', '!=', 'available')
-            ->where(function($q) use ($start, $end) {
+            ->where(function($q) use ($startStr, $endStr) {
                 // overlap: new start < existing end AND new end > existing start
-                $q->where('start_time', '<', $end)
-                  ->where('end_time', '>', $start);
+                // substr prevents issues with how time() columns append :00 seconds
+                $q->where(\DB::raw("substr(start_time, 1, 5)"), '<', $endStr)
+                  ->where(\DB::raw("substr(end_time, 1, 5)"), '>', $startStr);
             });
             
         if ($excludeId) {

@@ -36,7 +36,7 @@ function App() {
     return (
         <Router>
             <Routes>
-                <Route path="/" element={isLoggedIn ? <Navigate to="/dashboard" /> : <Login />} />
+                                <Route path="/" element={isLoggedIn ? <Navigate to="/dashboard" /> : <Login onLogin={() => setIsLoggedIn(true)} />} />
                 
                 {/* Admin/Dashboard Layout routes */}
                 {isLoggedIn && (

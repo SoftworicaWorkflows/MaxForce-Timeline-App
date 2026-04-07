@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
 
-export default function Login() {
+export default function Login({ onLogin }) {
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -17,10 +17,13 @@ export default function Login() {
         try {
             // Demo: Accept any credentials for testing
             if (email && password) {
-                // Store login state in localStorage
+                // Store login state and timestamp in localStorage
+                const now = new Date().toLocaleString();
                 localStorage.setItem('isLoggedIn', 'true');
                 localStorage.setItem('userEmail', email);
-                navigate('/schedule');
+                localStorage.setItem('lastLoginTime', now);
+                onLogin();
+                navigate('/dashboard');
             } else {
                 setError('Please enter email and password');
             }

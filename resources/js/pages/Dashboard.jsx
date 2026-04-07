@@ -266,42 +266,6 @@ export default function Dashboard() {
                         )}
                     </div>
                 </div>
-
-                {/* Quick Actions / Theme Highlight */}
-                <div className="bg-[#1B365D] p-8 rounded-[2.5rem] shadow-xl text-white relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12">
-                        <Zap size={140} />
-                    </div>
-                    <div className="relative z-10 h-full flex flex-col">
-                        <h3 className="text-xl font-black mb-2 leading-tight">System Performance</h3>
-                        <p className="text-xs text-white/60 font-bold mb-8">Data based on last 30 days of service operations.</p>
-                        
-                        <div className="flex-1 space-y-6">
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
-                                    <span>Efficiency</span>
-                                    <span className="text-[#8CC63F]">94%</span>
-                                </div>
-                                <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                                    <div className="h-full bg-[#8CC63F] rounded-full" style={{width: '94%'}}></div>
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
-                                    <span>Retention</span>
-                                    <span className="text-blue-400">82%</span>
-                                </div>
-                                <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                                    <div className="h-full bg-blue-400 rounded-full" style={{width: '82%'}}></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="mt-8 pt-8 border-t border-white/10 text-center">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-[#8CC63F]">Premium Analytics Powered</p>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     );

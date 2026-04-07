@@ -17,8 +17,16 @@ import {
 } from 'lucide-react';
 
 export default function PublicSchedule() {
+    const formatLocalYYYYMMDD = (dateObj) => {
+        const d = new Date(dateObj);
+        const month = '' + (d.getMonth() + 1);
+        const day = '' + d.getDate();
+        const year = d.getFullYear();
+        return [year, month.padStart(2, '0'), day.padStart(2, '0')].join('-');
+    };
+
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const [selectedDate, setSelectedDate] = useState(formatLocalYYYYMMDD(new Date()));
     const [allBookings, setAllBookings] = useState([]);
     const [loadingSchedule, setLoadingSchedule] = useState(false);
     const [showModal, setShowModal] = useState(false);
@@ -74,7 +82,7 @@ export default function PublicSchedule() {
     const goToToday = () => {
         const today = new Date();
         setCurrentDate(today);
-        setSelectedDate(today.toISOString().split('T')[0]);
+        setSelectedDate(formatLocalYYYYMMDD(today));
     };
 
     const getDaysInMonth = (date) => {
@@ -108,12 +116,12 @@ export default function PublicSchedule() {
     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     const getBookingsForDate = (date) => {
-        const dateStr = date.toISOString().split('T')[0];
+        const dateStr = formatLocalYYYYMMDD(date);
         return allBookings.filter(booking => booking.booking_date && booking.booking_date.split('T')[0] === dateStr);
     };
 
     const getFilteredBookings = () => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = formatLocalYYYYMMDD(new Date());
         
         switch(filterType) {
             case 'past':
@@ -308,8 +316,8 @@ export default function PublicSchedule() {
                                 {/* Days */}
                                 <div className="grid grid-cols-7 min-w-[280px] border-l border-gray-50">
                                     {daysInMonth.map(({ date, isCurrentMonth }, index) => {
-                                        const dateStr = date.toISOString().split('T')[0];
-                                        const isToday = dateStr === new Date().toISOString().split('T')[0];
+                                        const dateStr = formatLocalYYYYMMDD(date);
+                                        const isToday = dateStr === formatLocalYYYYMMDD(new Date());
                                         const isSelected = dateStr === selectedDate;
                                         const bookings = getBookingsForDate(date);
                                         const hasBookings = bookings.length > 0;
@@ -461,8 +469,8 @@ export default function PublicSchedule() {
                                 <div className="space-y-3 sm:space-y-4">
                                     {filteredBookings.map((booking, index) => {
                                         const bDate = booking.booking_date ? booking.booking_date.split('T')[0] : '';
-                                        const isPast = bDate < new Date().toISOString().split('T')[0];
-                                        const isToday = bDate === new Date().toISOString().split('T')[0];
+                                        const isPast = bDate < formatLocalYYYYMMDD(new Date());
+                                        const isToday = bDate === formatLocalYYYYMMDD(new Date());
                                         
                                         return (
                                             <div key={index} className={`

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { 
-    Calendar as CalendarIcon, 
-    Clock, 
-    UserPlus, 
-    Lock, 
-    Menu, 
-    X, 
+import {
+    Calendar as CalendarIcon,
+    Clock,
+    UserPlus,
+    Lock,
+    Menu,
+    X,
     Shield,
     ChevronRight,
     LogOut,
@@ -24,7 +24,13 @@ export default function AdminLayout() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+    const [currentTime, setCurrentTime] = useState(new Date());
     const location = useLocation();
+
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
 
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -42,14 +48,15 @@ export default function AdminLayout() {
     return (
         <NotificationProvider>
             <div className="h-screen flex overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 font-['Inter',system-ui,sans-serif]">
-                <SidebarAndMain 
-                    isSidebarOpen={isSidebarOpen} 
-                    setIsSidebarOpen={setIsSidebarOpen} 
-                    isMobile={isMobile} 
+                <SidebarAndMain
+                    isSidebarOpen={isSidebarOpen}
+                    setIsSidebarOpen={setIsSidebarOpen}
+                    isMobile={isMobile}
                     setIsLogoutModalOpen={setIsLogoutModalOpen}
+                    currentTime={currentTime}
                 />
-                
-                <LogoutModal 
+
+                <LogoutModal
                     isOpen={isLogoutModalOpen}
                     onClose={() => setIsLogoutModalOpen(false)}
                     onConfirm={() => {
@@ -62,7 +69,7 @@ export default function AdminLayout() {
     );
 }
 
-const SidebarAndMain = ({ isSidebarOpen, setIsSidebarOpen, isMobile, setIsLogoutModalOpen }) => {
+const SidebarAndMain = ({ isSidebarOpen, setIsSidebarOpen, isMobile, setIsLogoutModalOpen, currentTime }) => {
     return (
         <>
             {/* Mobile Header */}
@@ -75,8 +82,8 @@ const SidebarAndMain = ({ isSidebarOpen, setIsSidebarOpen, isMobile, setIsLogout
                     </div>
                     <div className="flex items-center gap-2">
                         <NotificationDropdown />
-                        <button 
-                            onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+                        <button
+                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                             className="p-2 rounded-xl bg-gradient-to-r from-[#1B365D] to-[#1B365D] text-white shadow-md"
                         >
                             {isSidebarOpen ? <X size={18} /> : <Menu size={18} />}
@@ -87,7 +94,7 @@ const SidebarAndMain = ({ isSidebarOpen, setIsSidebarOpen, isMobile, setIsLogout
 
             {/* Sidebar Overlay */}
             {isSidebarOpen && isMobile && (
-                <div 
+                <div
                     className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
                     onClick={() => setIsSidebarOpen(false)}
                 />
@@ -105,7 +112,7 @@ const SidebarAndMain = ({ isSidebarOpen, setIsSidebarOpen, isMobile, setIsLogout
                         <img src="/images/logo.png" alt="MaxForce Logo" className="w-full h-12 object-contain" />
                     </div>
                 </div>
-                
+
                 <div className="flex-1 overflow-y-auto py-6 px-4 space-y-6 scrollbar-thin">
                     <NavSection title="Main Overview">
                         <SidebarItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
@@ -120,7 +127,7 @@ const SidebarAndMain = ({ isSidebarOpen, setIsSidebarOpen, isMobile, setIsLogout
 
                     <NavSection title="System">
                         <SidebarItem to="/settings" icon={Settings} label="Settings" />
-                        <button 
+                        <button
                             onClick={() => setIsLogoutModalOpen(true)}
                             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all font-medium"
                         >
@@ -137,24 +144,39 @@ const SidebarAndMain = ({ isSidebarOpen, setIsSidebarOpen, isMobile, setIsLogout
                 <header className="hidden md:flex h-20 bg-white border-b border-gray-100 px-8 items-center justify-between sticky top-0 z-30">
                     <div className="relative w-96 group">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#1B365D] transition-colors" size={18} />
-                        <input 
-                            type="text" 
-                            placeholder="Quick search bookings..." 
+                        <input
+                            type="text"
+                            placeholder="Quick search bookings..."
                             className="w-full pl-12 pr-4 py-2.5 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-[#1B365D] focus:bg-white transition-all text-xs font-semibold"
                         />
                     </div>
                     
+                    {/* Live Digital Clock Section */}
+                    <div className="flex items-center gap-4 px-5 py-2.5 bg-gray-50/80 rounded-2xl border border-gray-100 ml-6 group transition-all hover:bg-white hover:shadow-sm">
+                        <div className="relative flex items-center justify-center">
+                            <div className="w-2 h-2 bg-[#8CC63F] rounded-full animate-pulse shadow-[0_0_10px_rgba(140,198,63,0.5)]" />
+                            <div className="absolute inset-0 bg-[#8CC63F] rounded-full animate-ping opacity-25" />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 leading-none">System Live</span>
+                            <span className="text-sm font-black text-[#1B365D] tabular-nums tracking-tight mt-1">
+                                {currentTime.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                            </span>
+                        </div>
+                    </div>
+
                     <div className="flex items-center gap-4">
                         <NotificationDropdown />
+                        <p className="text-sm text-gray-400 font-medium mt-0.5">Last login: <br /> {localStorage.getItem('lastLoginTime') || 'Just now'}</p>
                         <div className="h-10 w-[1px] bg-gray-100 mx-2" />
                         <div className="flex items-center gap-3 pl-2">
                             <div className="text-right hidden lg:block">
                                 <p className="text-xs font-black text-[#1B365D] leading-none mb-1">Admin User</p>
-                                <p className="text-[10px] font-bold text-[#8CC63F] uppercase tracking-tighter">System Manager</p>
+                                <div className="flex flex-col items-end">
+                                    <p className="text-[10px] font-bold text-[#8CC63F] uppercase tracking-tighter">System Manager</p>
+                                </div>
                             </div>
-                            <div className="w-10 h-10 bg-gradient-to-br from-[#1B365D] to-[#2b518a] rounded-xl flex items-center justify-center text-white font-black shadow-lg">
-                                AD
-                            </div>
+                           <img src="/images/fevicon.png" className='h-8 rounded-full' alt="" />
                         </div>
                     </div>
                 </header>
@@ -187,17 +209,17 @@ const SidebarItem = ({ to, icon: Icon, label, badge }) => (
         className={({ isActive }) => `
             group relative flex items-center gap-3 w-full px-4 py-3 
             transition-all duration-200 rounded-xl font-semibold text-sm
-            ${isActive 
-                ? 'bg-gradient-to-r from-[#1B365D] to-[#1B365D] text-white shadow-lg' 
+            ${isActive
+                ? 'bg-gradient-to-r from-[#1B365D] to-[#1B365D] text-white shadow-lg'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-[#1B365D]'
             }
         `}
     >
         {({ isActive }) => (
             <>
-                <Icon 
-                    size={20} 
-                    className={`transition-all ${isActive ? 'text-[#8CC63F]' : 'text-gray-400 group-hover:text-[#8CC63F]'}`} 
+                <Icon
+                    size={20}
+                    className={`transition-all ${isActive ? 'text-[#8CC63F]' : 'text-gray-400 group-hover:text-[#8CC63F]'}`}
                 />
                 <span className="flex-1 text-left">{label}</span>
                 {badge && !isActive && (
