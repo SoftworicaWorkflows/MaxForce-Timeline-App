@@ -31,6 +31,7 @@ class CustomerController extends Controller
             'phone' => 'required|string|max:20',
             'email' => 'nullable|email|unique:customers,email',
             'address' => 'nullable|string|max:255',
+            'price' => 'nullable|numeric|min:0',
         ]);
 
         $customer = Customer::create([
@@ -38,6 +39,7 @@ class CustomerController extends Controller
             'phone' => $validated['phone'],
             'email' => $validated['email'] ?? null,
             'address' => $validated['address'] ?? null,
+            'price' => $validated['price'] ?? null,
         ]);
 
         // Trigger real-time notification
@@ -74,6 +76,7 @@ class CustomerController extends Controller
             'phone' => 'sometimes|required|string|max:20',
             'email' => 'sometimes|nullable|email|unique:customers,email,' . $id,
             'address' => 'sometimes|nullable|string|max:255',
+            'price' => 'sometimes|nullable|numeric|min:0',
         ]);
 
         $customer->update($validated);

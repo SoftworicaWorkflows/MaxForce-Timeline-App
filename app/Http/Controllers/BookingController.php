@@ -109,9 +109,10 @@ class BookingController extends Controller
             'end_time' => 'required|date_format:H:i|after:start_time',
             'customer_name' => 'required|string|max:255',
             'phone_number' => 'required|string|max:20',
-            'email' => 'required|email',
+            'email' => 'nullable|email',
             'address' => 'nullable|string|max:255',
             'service_notes' => 'nullable|string|max:1000',
+            'price' => 'nullable|numeric|min:0',
         ]);
 
         if ($this->hasOverlap($validated['booking_date'], $validated['start_time'], $validated['end_time'])) {
@@ -225,9 +226,10 @@ class BookingController extends Controller
             'end_time' => 'sometimes|required|date_format:H:i|after:start_time',
             'customer_name' => 'sometimes|required|string|max:255',
             'phone_number' => 'sometimes|required|string|max:20',
-            'email' => 'sometimes|required|email',
+            'email' => 'sometimes|nullable|email',
             'address' => 'sometimes|nullable|string|max:255',
             'service_notes' => 'nullable|string|max:1000',
+            'price' => 'nullable|numeric|min:0',
             'status' => 'sometimes|required|in:available,booked,blocked'
         ]);
         

@@ -19,6 +19,7 @@ class Booking extends Model
         'email',
         'address',
         'service_notes',
+        'price',
         'status',
     ];
 

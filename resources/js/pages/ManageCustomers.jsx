@@ -16,7 +16,8 @@ import {
     AlertCircle,
     ChevronDown,
     Download,
-    RefreshCw
+    RefreshCw,
+    DollarSign
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import EditCustomerModal from '../components/EditCustomerModal';
@@ -181,14 +182,15 @@ export default function ManageCustomers() {
     };
 
     const exportToCSV = () => {
-        const headers = ['ID', 'Name', 'Phone', 'Email', 'Address', 'Status'];
+        const headers = ['ID', 'Name', 'Phone', 'Email', 'Address', 'Status', 'Price'];
         const csvData = filteredCustomers.map(c => [
             c.id,
             c.name,
             c.phone,
             c.email || '',
             c.address || '',
-            c.status || 'active'
+            c.status || 'active',
+            c.price || ''
         ]);
 
         const csvContent = [headers, ...csvData].map(row => row.join(',')).join('\n');
@@ -295,6 +297,7 @@ export default function ManageCustomers() {
                                 <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-wider">Customer</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-wider text-center">Contact</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-wider">Address</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-wider text-center">Price</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-wider text-center">Status</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-wider text-right">Actions</th>
                             </tr>
@@ -321,6 +324,9 @@ export default function ManageCustomers() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="h-4 bg-gray-200 rounded w-40"></div>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <div className="h-4 bg-gray-200 rounded w-16 mx-auto"></div>
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <div className="h-5 bg-gray-200 rounded-full w-16 mx-auto"></div>
@@ -381,6 +387,18 @@ export default function ManageCustomers() {
                                             </div>
                                         </td>
 
+                                        {/* Price */}
+                                        <td className="px-6 py-4 text-center">
+                                            {customer.price !== null && customer.price !== undefined ? (
+                                                <span className="inline-flex items-center gap-1 text-sm font-bold text-gray-900 bg-gray-50 border border-gray-100 px-2 py-1 rounded-lg">
+                                                    <DollarSign size={14} className="text-[#8CC63F]" />
+                                                    {parseFloat(customer.price).toFixed(2)}
+                                                </span>
+                                            ) : (
+                                                <span className="text-xs text-gray-400 font-medium italic">N/A</span>
+                                            )}
+                                        </td>
+
                                         {/* Status Badge */}
                                         <td className="px-6 py-4 text-center">
                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 text-green-700 text-[10px] font-bold uppercase">
@@ -413,7 +431,7 @@ export default function ManageCustomers() {
                             ) : (
                                 // Empty State
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-16 text-center">
+                                    <td colSpan="6" className="px-6 py-16 text-center">
                                         <div className="flex flex-col items-center">
                                             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                                                 <Search size={32} className="text-gray-400" />

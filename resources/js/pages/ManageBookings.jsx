@@ -15,7 +15,8 @@ import {
     CheckCircle,
     ChevronLeft,
     ChevronRight,
-    Search
+    Search,
+    DollarSign
 } from 'lucide-react';
 import { getBookings, deleteBooking, updateBooking } from '../services/api';
 import CustomerStatsModal from '../components/CustomerStatsModal';
@@ -350,6 +351,7 @@ export default function ManageBookings() {
                                     <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-500">Customer</th>
                                     <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-500">Contact</th>
                                     <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-500">Services</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-500">Price</th>
                                     <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-500">Status</th>
                                     <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-500 text-right">Actions</th>
                                 </tr>
@@ -416,6 +418,20 @@ export default function ManageBookings() {
                                             <div className="text-xs font-medium text-gray-700 max-w-xs break-words whitespace-normal">
                                                 {booking.service_notes || 'General Service'}
                                             </div>
+                                        </td>
+
+                                        {/* Price */}
+                                        <td className="px-6 py-4">
+                                            {booking.price != null ? (
+                                                <div className="flex items-center gap-1">
+                                                    <DollarSign size={12} className="text-[#8CC63F]" />
+                                                    <span className="text-sm font-bold text-gray-900">
+                                                        {parseFloat(booking.price).toFixed(2)}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-gray-400">—</span>
+                                            )}
                                         </td>
                                         
                                         {/* Status */}
@@ -601,12 +617,24 @@ export default function ManageBookings() {
                                     </label>
                                     <input 
                                         type="email" 
-                                        required 
-                                        value={editingBooking.email} 
+                                        value={editingBooking.email || ''} 
                                         onChange={e => setEditingBooking({...editingBooking, email: e.target.value})} 
                                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#1B365D] focus:bg-white transition-all"
                                     />
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-wider mb-2">
+                                    Service Address
+                                </label>
+                                <input 
+                                    type="text" 
+                                    value={editingBooking.address || ''} 
+                                    onChange={e => setEditingBooking({...editingBooking, address: e.target.value})} 
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#1B365D] focus:bg-white transition-all"
+                                    placeholder="Enter full address"
+                                />
                             </div>
 
                             <div>
@@ -620,6 +648,24 @@ export default function ManageBookings() {
                                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium resize-none focus:ring-2 focus:ring-[#1B365D] focus:bg-white transition-all"
                                     placeholder="Enter service details or special instructions..."
                                 />
+                            </div>
+
+                            <div>
+                                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-wider mb-2">
+                                    Price (AUD)
+                                </label>
+                                <div className="relative">
+                                    <DollarSign size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={editingBooking.price ?? ''}
+                                        onChange={e => setEditingBooking({...editingBooking, price: e.target.value})}
+                                        className="w-full pl-9 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#1B365D] focus:bg-white transition-all"
+                                        placeholder="0.00"
+                                    />
+                                </div>
                             </div>
                             
                             <div className="flex gap-3 pt-4">

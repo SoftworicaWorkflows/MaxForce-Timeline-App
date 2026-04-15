@@ -14,7 +14,8 @@ import {
     AlertCircle,
     Building,
     FileText,
-    ArrowLeft
+    ArrowLeft,
+    DollarSign
 } from 'lucide-react';
 
 const InputField = ({ 
@@ -66,10 +67,10 @@ const InputField = ({
 export default function AddCustomer() {
     const navigate = useNavigate();
     const [createData, setCreateData] = useState({
-        name: '', 
         phone: '', 
         email: '', 
-        address: ''
+        address: '',
+        price: ''
     });
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -104,9 +105,7 @@ export default function AddCustomer() {
             newErrors.phone = 'Please enter a valid phone number';
         }
         
-        if (!createData.email.trim()) {
-            newErrors.email = 'Email address is required';
-        } else if (!validateEmail(createData.email)) {
+        if (createData.email.trim() && !validateEmail(createData.email)) {
             newErrors.email = 'Please enter a valid email address';
         }
         
@@ -128,7 +127,8 @@ export default function AddCustomer() {
                 name: '', 
                 phone: '', 
                 email: '', 
-                address: '' 
+                address: '',
+                price: ''
             });
             alert('✅ Customer registered successfully!');
             navigate('/schedule');
@@ -239,15 +239,15 @@ export default function AddCustomer() {
                     {/* Email Address */}
                     <InputField 
                         icon={Mail}
-                        label="Email Address"
+                        label="Email Address (Optional)"
                         type="email"
-                        required
                         placeholder="customer@example.com"
                         value={createData.email}
                         onChange={e => handleInputChange('email', e.target.value)}
                         error={errors.email}
                         maxLength={100}
                     />
+
 
                     {/* Submit Button */}
                     <button 

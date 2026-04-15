@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Clock, MapPin, TrendingUp, History, ClipboardCheck, Loader2, ExternalLink, Plus, AlertCircle, User, Phone, Mail, Award, Star, Activity } from 'lucide-react';
+import { X, Calendar, Clock, MapPin, TrendingUp, History, ClipboardCheck, Loader2, ExternalLink, Plus, AlertCircle, User, Phone, Mail, Award, Star, Activity, DollarSign } from 'lucide-react';
 import { getCustomerStats, createBooking } from '../services/api';
 
 const StatCard = ({ icon: Icon, label, value, colorClass, trend }) => (
@@ -275,13 +275,12 @@ export default function CustomerStatsModal({ isOpen, customer, onClose }) {
                                     value={calculateBookingFrequency()} 
                                     colorClass="bg-green-500" 
                                 />
-                                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Service Trend</p>
-                                        <Award size={16} className="text-green-500" />
-                                    </div>
-                                    <MiniChart data={chartData} />
-                                </div>
+                                <StatCard
+                                    icon={DollarSign}
+                                    label="Total Revenue"
+                                    value={`$${(stats?.stats?.history || []).reduce((sum, b) => sum + (parseFloat(b.price) || 0), 0).toFixed(2)}`}
+                                    colorClass="bg-yellow-500"
+                                />
                             </div>
 
                             {/* Service Timeline */}
@@ -388,6 +387,12 @@ export default function CustomerStatsModal({ isOpen, customer, onClose }) {
                                                                 <span className="font-semibold text-green-600">
                                                                     {booking.service_type || 'Pest Control'}
                                                                 </span>
+                                                                {booking.price != null && (
+                                                                    <span className="flex items-center gap-0.5 font-bold text-yellow-600">
+                                                                        <DollarSign size={11} />
+                                                                        {parseFloat(booking.price).toFixed(2)}
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                             {booking.service_notes && (
                                                                 <p className="mt-2 text-xs text-gray-500 italic border-l-2 border-green-200 pl-3">

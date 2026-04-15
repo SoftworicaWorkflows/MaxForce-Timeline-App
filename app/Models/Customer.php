@@ -11,6 +11,7 @@ class Customer extends Model
         'phone',
         'email',
         'address',
+        'price',
     ];
 
     public function bookings()

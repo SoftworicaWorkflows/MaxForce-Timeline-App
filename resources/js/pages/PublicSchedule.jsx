@@ -17,7 +17,8 @@ import {
     X,
     AlertCircle,
     CheckCircle,
-    RefreshCw
+    RefreshCw,
+    DollarSign
 } from 'lucide-react';
 
 // Confirmation Dialog Component
@@ -586,7 +587,7 @@ export default function PublicSchedule() {
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                                                    <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
                                                         <span className="flex items-center gap-1">
                                                             <Clock size={12} />
                                                             {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
@@ -597,9 +598,27 @@ export default function PublicSchedule() {
                                                                 {booking.phone_number}
                                                             </span>
                                                         )}
+                                                        {booking.email && (
+                                                          <span className="flex items-center gap-1">
+                                                              <Mail size={12} />
+                                                              {booking.email}
+                                                          </span>
+                                                        )}
                                                     </div>
+                                                    {booking.address && (
+                                                        <div className="flex items-start gap-1 text-gray-500 mt-2">
+                                                            <MapPin size={12} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                                                            <span className="break-words text-xs">{booking.address}</span>
+                                                        </div>
+                                                    )}
                                                     {booking.service_notes && (
-                                                        <p className="text-xs text-gray-500 mt-2 line-clamp-1">{booking.service_notes}</p>
+                                                        <p className="text-xs text-gray-500 mt-1 line-clamp-1 italic">{booking.service_notes}</p>
+                                                    )}
+                                                    {booking.price !== null && booking.price !== undefined && (
+                                                        <div className="mt-2 flex items-center gap-1 text-sm font-bold text-gray-900">
+                                                            <DollarSign size={14} className="text-[#8CC63F]" />
+                                                            {parseFloat(booking.price).toFixed(2)}
+                                                        </div>
                                                     )}
                                                 </div>
                                                 <button 
@@ -737,12 +756,23 @@ export default function PublicSchedule() {
                                                                         <span className="break-words text-xs truncate max-w-[200px]">{booking.email}</span>
                                                                     </div>
                                                                 )}
+                                                                {booking.price !== null && booking.price !== undefined && (
+                                                                    <div className="flex items-center gap-1 text-[#8CC63F] font-bold">
+                                                                        <DollarSign size={12} />
+                                                                        <span>{parseFloat(booking.price).toFixed(2)}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                        {booking.address && (
+                                                            <div className="flex items-start gap-2 text-gray-500 mt-1">
+                                                                <MapPin size={12} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                                                                <span className="break-words text-xs">{booking.address}</span>
                                                             </div>
                                                         )}
                                                         {booking.service_notes && (
                                                             <div className="flex items-start gap-2 text-gray-500 mt-1">
-                                                                <MapPin size={12} className="text-gray-400 mt-0.5 flex-shrink-0" />
-                                                                <span className="break-words text-xs">{booking.service_notes}</span>
+                                                                <span className="break-words text-xs italic">{booking.service_notes}</span>
                                                             </div>
                                                         )}
                                                     </div>

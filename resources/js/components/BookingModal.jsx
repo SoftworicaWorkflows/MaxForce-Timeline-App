@@ -10,6 +10,7 @@ const BookingModal = ({ isOpen, selectedDate, onClose, onBookingSuccess }) => {
         email: '',
         service_notes: '',
         address: '',
+        price: '',
         start_time: '09:00',
         end_time: '09:30'
     });
@@ -78,6 +79,7 @@ const BookingModal = ({ isOpen, selectedDate, onClose, onBookingSuccess }) => {
             email: '',
             address: '',
             service_notes: '',
+            price: '',
             start_time: '09:00',
             end_time: '09:30'
         });
@@ -318,26 +320,42 @@ const BookingModal = ({ isOpen, selectedDate, onClose, onBookingSuccess }) => {
                                             name="email"
                                             value={formData.email}
                                             onChange={handleChange}
-                                            required
                                             className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-max-navy transition-all placeholder-gray-300 font-medium"
                                             placeholder="Email"
                                         />
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">
-                                        Service Address
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="address"
-                                        value={formData.address || ''}
-                                        onChange={handleChange}
-                                        required
-                                        className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-max-navy transition-all placeholder-gray-300 font-medium"
-                                        placeholder="Address"
-                                    />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">
+                                            Service Address
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="address"
+                                            value={formData.address || ''}
+                                            onChange={handleChange}
+                                            required
+                                            className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-max-navy transition-all placeholder-gray-300 font-medium"
+                                            placeholder="Address"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">
+                                            Price (AUD)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            name="price"
+                                            value={formData.price}
+                                            onChange={handleChange}
+                                            min="0"
+                                            step="0.01"
+                                            className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-max-navy transition-all placeholder-gray-300 font-medium"
+                                            placeholder="0.00"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div>

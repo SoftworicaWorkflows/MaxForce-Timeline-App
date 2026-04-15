@@ -12,7 +12,9 @@ import {
     CheckCircle2,
     Briefcase,
     ChevronRight,
-    RefreshCw
+    RefreshCw,
+    Phone,
+    DollarSign
 } from 'lucide-react';
 import { 
     BarChart, 
@@ -93,6 +95,18 @@ const BookingItem = ({ booking, index }) => (
                         <Clock size={12} /> 
                         {booking.start_time?.substring(0, 5) || '--:--'}
                     </span>
+                    {booking.phone_number && booking.phone_number !== 'N/A' && (
+                        <span className="flex items-center gap-1">
+                            <Phone size={12} /> 
+                            {booking.phone_number}
+                        </span>
+                    )}
+                    {booking.price !== null && booking.price !== undefined && (
+                        <span className="flex items-center gap-1 text-green-600 font-bold">
+                            <DollarSign size={12} /> 
+                            {parseFloat(booking.price).toFixed(2)}
+                        </span>
+                    )}
                     <span className="flex items-center gap-1">
                         <Briefcase size={12} /> 
                         Pest Control
