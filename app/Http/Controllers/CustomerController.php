@@ -32,6 +32,7 @@ class CustomerController extends Controller
             'email' => 'nullable|email|unique:customers,email',
             'address' => 'nullable|string|max:255',
             'price' => 'nullable|numeric|min:0',
+            'service_interval' => 'nullable|string|in:3w,3m,6m,12m',
         ]);
 
         $customer = Customer::create([
@@ -40,6 +41,12 @@ class CustomerController extends Controller
             'email' => $validated['email'] ?? null,
             'address' => $validated['address'] ?? null,
             'price' => $validated['price'] ?? null,
+            'service_interval' => $validated['service_interval'] ?? null,
+            'next_service_date' => isset($validated['service_interval']) 
+                ? (str_ends_with($validated['service_interval'], 'w') 
+                    ? now()->addWeeks((int)$validated['service_interval'])->toDateString() 
+                    : now()->addMonths((int)$validated['service_interval'])->toDateString())
+                : null,
         ]);
 
         // Trigger real-time notification
@@ -77,7 +84,14 @@ class CustomerController extends Controller
             'email' => 'sometimes|nullable|email|unique:customers,email,' . $id,
             'address' => 'sometimes|nullable|string|max:255',
             'price' => 'sometimes|nullable|numeric|min:0',
+            'service_interval' => 'sometimes|nullable|string|in:3w,3m,6m,12m',
         ]);
+
+        if (isset($validated['service_interval']) && $validated['service_interval'] != $customer->service_interval) {
+            $validated['next_service_date'] = str_ends_with($validated['service_interval'], 'w') 
+                ? now()->addWeeks((int)$validated['service_interval'])->toDateString() 
+                : now()->addMonths((int)$validated['service_interval'])->toDateString();
+        }
 
         $customer->update($validated);
 

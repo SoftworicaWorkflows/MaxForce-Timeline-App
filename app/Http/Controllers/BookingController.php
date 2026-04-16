@@ -113,6 +113,7 @@ class BookingController extends Controller
             'address' => 'nullable|string|max:255',
             'service_notes' => 'nullable|string|max:1000',
             'price' => 'nullable|numeric|min:0',
+            'service_interval' => 'nullable|string|in:3w,3m,6m,12m',
         ]);
 
         if ($this->hasOverlap($validated['booking_date'], $validated['start_time'], $validated['end_time'])) {
@@ -122,8 +123,64 @@ class BookingController extends Controller
             ], 409);
         }
 
+        $customerId = $validated['customer_id'];
+
+        if (!$customerId) {
+            // Find or create customer by phone number
+            $customer = Customer::where('phone', $validated['phone_number'])->first();
+            
+            if (!$customer) {
+                $customer = Customer::create([
+                    'name' => $validated['customer_name'],
+                    'phone' => $validated['phone_number'],
+                    'email' => $validated['email'],
+                    'address' => $validated['address'],
+                    'price' => $validated['price'] ?? null,
+                ]);
+            } else {
+                $customer->update(['price' => $validated['price'] ?? $customer->price]);
+            }
+            $customerId = $customer->id;
+        } else {
+            // Update existing customer's price and interval if provided
+            $updateData = ['price' => $validated['price']];
+            if (isset($validated['service_interval'])) {
+                $updateData['service_interval'] = $validated['service_interval'];
+                $interval = $validated['service_interval'];
+                $dateObj = \Carbon\Carbon::parse($validated['booking_date']);
+                
+                if (str_ends_with($interval, 'w')) {
+                    $dateObj->addWeeks((int)$interval);
+                } else {
+                    $dateObj->addMonths((int)$interval);
+                }
+                
+                $updateData['next_service_date'] = $dateObj->toDateString();
+            }
+            Customer::where('id', $customerId)->update($updateData);
+        }
+
+        // Additional Logic for New Customer: Calculate next service date
+        if (isset($validated['service_interval'])) {
+            $customer = Customer::find($customerId);
+            $interval = $validated['service_interval'];
+            $dateObj = \Carbon\Carbon::parse($validated['booking_date']);
+            
+            if (str_ends_with($interval, 'w')) {
+                $dateObj->addWeeks((int)$interval);
+            } else {
+                $dateObj->addMonths((int)$interval);
+            }
+            
+            $customer->update([
+                'service_interval' => $interval,
+                'next_service_date' => $dateObj->toDateString(),
+            ]);
+        }
+
         $booking = Booking::create([
             ...$validated,
+            'customer_id' => $customerId,
             'status' => 'booked',
         ]);
 
@@ -228,9 +285,9 @@ class BookingController extends Controller
             'phone_number' => 'sometimes|required|string|max:20',
             'email' => 'sometimes|nullable|email',
             'address' => 'sometimes|nullable|string|max:255',
-            'service_notes' => 'nullable|string|max:1000',
             'price' => 'nullable|numeric|min:0',
-            'status' => 'sometimes|required|in:available,booked,blocked'
+            'status' => 'sometimes|required|in:available,booked,blocked',
+            'service_interval' => 'nullable|string|in:3w,3m,6m,12m',
         ]);
         
         $newDate = $validated['booking_date'] ?? $booking->booking_date;
@@ -245,6 +302,27 @@ class BookingController extends Controller
         }
 
         $booking->update($validated);
+
+        // Update customer's next service date if booking date or interval changed
+        if ($booking->customer_id && (isset($validated['booking_date']) || isset($validated['service_interval']))) {
+            $customer = Customer::find($booking->customer_id);
+            if ($customer) {
+                $interval = $validated['service_interval'] ?? $customer->service_interval;
+                if ($interval) {
+                    $dateObj = \Carbon\Carbon::parse($newDate);
+                    if (str_ends_with($interval, 'w')) {
+                        $dateObj->addWeeks((int)$interval);
+                    } else {
+                        $dateObj->addMonths((int)$interval);
+                    }
+                    
+                    $customer->update([
+                        'service_interval' => $interval,
+                        'next_service_date' => $dateObj->toDateString(),
+                    ]);
+                }
+            }
+        }
 
         // Trigger real-time notification
         Notification::create([

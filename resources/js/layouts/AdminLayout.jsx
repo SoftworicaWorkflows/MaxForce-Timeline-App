@@ -184,12 +184,10 @@ const SidebarAndMain = ({
                 {/* Navigation Menu */}
                 <div className="flex-1 overflow-y-auto py-6 px-4 space-y-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                     <NavSection title="Main Overview">
-                        <SidebarItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
                         <SidebarItem to="/schedule" icon={CalendarIcon} label="My Schedule" />
                     </NavSection>
 
                     <NavSection title="Customer Management">
-                        <SidebarItem to="/create" icon={UserPlus} label="Add Customer" />
                         <SidebarItem to="/customers" icon={Users} label="Manage Customers" />
                         <SidebarItem 
                             to="/manage" 
@@ -200,6 +198,7 @@ const SidebarAndMain = ({
                     </NavSection>
 
                     <NavSection title="System & Security">
+                        <SidebarItem to="/reports" icon={LayoutDashboard} label="Reports" />
                         <SidebarItem to="/settings" icon={Settings} label="Settings" />
                         <button
                             onClick={() => setIsLogoutModalOpen(true)}
@@ -230,14 +229,7 @@ const SidebarAndMain = ({
                 {/* Desktop Top Header */}
                 <header className="hidden md:flex h-20 bg-white border-b border-gray-100 px-6 lg:px-8 items-center justify-between sticky top-0 z-30 shadow-sm">
                     {/* Search Bar */}
-                    <div className="relative w-80 lg:w-96">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
-                        <input
-                            type="text"
-                            placeholder="Search customers, bookings..."
-                            className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1B365D] focus:bg-white transition-all text-sm font-medium placeholder:text-gray-400"
-                        />
-                    </div>
+                    <div className="flex-1" /> {/* Spacer */}
                     
                     {/* Right Section */}
                     <div className="flex items-center gap-4">

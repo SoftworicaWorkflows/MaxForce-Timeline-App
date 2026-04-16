@@ -125,7 +125,9 @@ const NotificationSkeleton = () => (
 
 export default function NotificationDropdown() {
     const [isOpen, setIsOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState('all'); // 'all' or 'service'
     const [localUnreadCount, setLocalUnreadCount] = useState(0);
+    const [filteredNotifications, setFilteredNotifications] = useState([]);
     const { 
         notifications, 
         unreadCount, 
@@ -137,11 +139,17 @@ export default function NotificationDropdown() {
     const dropdownRef = useRef(null);
     const buttonRef = useRef(null);
 
-    // Update local unread count based on actual notification objects
+    // Update local unread count and filtered notifications
     useEffect(() => {
         const count = notifications.filter(n => !n.is_read).length;
         setLocalUnreadCount(count);
-    }, [notifications]);
+
+        if (activeTab === 'service') {
+            setFilteredNotifications(notifications.filter(n => n.category === 'service'));
+        } else {
+            setFilteredNotifications(notifications);
+        }
+    }, [notifications, activeTab]);
 
     // Handle click outside
     useEffect(() => {
@@ -257,6 +265,35 @@ export default function NotificationDropdown() {
                                 </button>
                             </div>
                         </div>
+
+                        {/* Tabs */}
+                        <div className="flex gap-4 mt-5 border-b border-white/10">
+                            <button 
+                                onClick={() => setActiveTab('all')}
+                                className={`pb-2 text-[10px] font-black uppercase tracking-widest transition-all relative ${
+                                    activeTab === 'all' ? 'text-white' : 'text-blue-200 hover:text-white'
+                                }`}
+                            >
+                                All Notifications
+                                {activeTab === 'all' && (
+                                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full animate-in fade-in slide-in-from-bottom-1" />
+                                )}
+                            </button>
+                            <button 
+                                onClick={() => setActiveTab('service')}
+                                className={`pb-2 text-[10px] font-black uppercase tracking-widest transition-all relative flex items-center gap-2 ${
+                                    activeTab === 'service' ? 'text-white' : 'text-blue-200 hover:text-white'
+                                }`}
+                            >
+                                Service Alerts
+                                {notifications.filter(n => n.category === 'service' && !n.is_read).length > 0 && (
+                                    <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" />
+                                )}
+                                {activeTab === 'service' && (
+                                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full animate-in fade-in slide-in-from-bottom-1" />
+                                )}
+                            </button>
+                        </div>
                     </div>
 
                     {/* Content */}
@@ -267,8 +304,8 @@ export default function NotificationDropdown() {
                                 <NotificationSkeleton />
                                 <NotificationSkeleton />
                             </>
-                        ) : notifications.length > 0 ? (
-                            notifications.map(notification => (
+                        ) : filteredNotifications.length > 0 ? (
+                            filteredNotifications.map(notification => (
                                 <NotificationItem 
                                     key={notification.id} 
                                     notification={notification} 
@@ -281,13 +318,15 @@ export default function NotificationDropdown() {
                                     <Bell size={28} className="text-gray-300" />
                                 </div>
                                 <h6 className="font-bold text-gray-700 text-sm mb-1">
-                                    No notifications
+                                    {activeTab === 'service' ? 'No service alerts' : 'No notifications'}
                                 </h6>
                                 <p className="text-[11px] text-gray-400">
-                                    You're all caught up! Check back later for updates.
+                                    {activeTab === 'service' 
+                                        ? "Any upcoming service reminders will appear here." 
+                                        : "You're all caught up! Check back later for updates."}
                                 </p>
                             </div>
-                        )}
+                        ) }
                     </div>
 
                     {/* Footer */}

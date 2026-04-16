@@ -232,14 +232,18 @@ export default function CustomerStatsModal({ isOpen, customer, onClose }) {
                                     <Phone size={16} className="text-gray-400" />
                                     <div>
                                         <p className="text-[10px] font-bold text-gray-400">Phone</p>
-                                        <p className="text-sm font-semibold text-gray-900">{customer?.phone || 'N/A'}</p>
+                                        <p className="text-sm font-semibold text-gray-900">
+                                            {stats?.customer?.phone || customer?.phone || 'N/A'}
+                                        </p>
                                     </div>
                                 </div>
                                 <div className="bg-white p-3 rounded-xl border border-gray-100 flex items-center gap-3">
                                     <Mail size={16} className="text-gray-400" />
                                     <div>
                                         <p className="text-[10px] font-bold text-gray-400">Email</p>
-                                        <p className="text-sm font-semibold text-gray-900 truncate">{customer?.email || 'N/A'}</p>
+                                        <p className="text-sm font-semibold text-gray-900 truncate">
+                                            {stats?.customer?.email || customer?.email || 'N/A'}
+                                        </p>
                                     </div>
                                 </div>
                                 <div className="bg-white p-3 rounded-xl border border-gray-100 flex items-center gap-3">
@@ -247,7 +251,9 @@ export default function CustomerStatsModal({ isOpen, customer, onClose }) {
                                     <div>
                                         <p className="text-[10px] font-bold text-gray-400">Customer Since</p>
                                         <p className="text-sm font-semibold text-gray-900">
-                                            {customer?.created_at ? new Date(customer.created_at).toLocaleDateString() : 'N/A'}
+                                            {stats?.customer?.created_at 
+                                                ? new Date(stats.customer.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) 
+                                                : (customer?.created_at ? new Date(customer.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Loading...')}
                                         </p>
                                     </div>
                                 </div>
@@ -256,6 +262,17 @@ export default function CustomerStatsModal({ isOpen, customer, onClose }) {
                                     <div>
                                         <p className="text-[10px] font-bold text-gray-400">Status</p>
                                         <p className="text-sm font-semibold text-green-600">Active</p>
+                                    </div>
+                                </div>
+                                <div className="bg-white p-3 rounded-xl border border-gray-100 flex items-center gap-3">
+                                    <Calendar size={16} className="text-[#8CC63F]" />
+                                    <div>
+                                        <p className="text-[10px] font-bold text-gray-400">Next Service</p>
+                                        <p className="text-sm font-semibold text-max-navy">
+                                            {stats?.customer?.next_service_date 
+                                                ? new Date(stats.customer.next_service_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) 
+                                                : 'Not Scheduled'}
+                                        </p>
                                     </div>
                                 </div>
                             </div>

@@ -8,6 +8,7 @@ import {
     X, 
     RefreshCw, 
     PieChart, 
+    PlusCircle,
     History,
     Calendar,
     MapPin,
@@ -108,7 +109,6 @@ const StatusBadge = ({ status }) => {
 export default function ManageBookings() {
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [editingBooking, setEditingBooking] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
@@ -189,19 +189,6 @@ export default function ManageBookings() {
             showToast(error.message || 'Failed to delete booking', 'error');
         } finally {
             setIsDeleting(false);
-        }
-    };
-
-    const submitUpdate = async (e) => {
-        e.preventDefault();
-        try {
-            await updateBooking(editingBooking.id, editingBooking);
-            setEditingBooking(null);
-            await fetchBookings();
-            showToast('Booking updated successfully', 'success');
-        } catch (error) {
-            console.error('Error updating booking:', error);
-            showToast(error.message || 'Failed to update booking. Conflicting time slot or invalid data.', 'error');
         }
     };
 
@@ -444,17 +431,10 @@ export default function ManageBookings() {
                                             <div className="flex items-center justify-end gap-2">
                                                 <button 
                                                     onClick={() => handleViewStats(booking)}
-                                                    className="p-2 bg-gray-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all duration-200"
-                                                    title="View Service History"
+                                                    className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-600 hover:text-white transition-all duration-200"
+                                                    title="Add Service / History"
                                                 >
-                                                    <PieChart size={15} />
-                                                </button>
-                                                <button 
-                                                    onClick={() => setEditingBooking(booking)} 
-                                                    className="p-2 bg-gray-50 text-amber-600 rounded-lg hover:bg-amber-600 hover:text-white transition-all duration-200"
-                                                    title="Edit Booking"
-                                                >
-                                                    <Edit2 size={15} />
+                                                    <PlusCircle size={16} />
                                                 </button>
                                                 <button 
                                                     onClick={() => handleDeleteClick(booking)} 
@@ -525,166 +505,6 @@ export default function ManageBookings() {
                             </div>
                         </div>
                     )}
-                </div>
-            )}
-            
-            {/* Edit Modal */}
-            {editingBooking && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
-                        <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center">
-                            <div>
-                                <h3 className="text-lg font-black text-gray-900">Edit Booking</h3>
-                                <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider mt-0.5">
-                                    ID: #{String(editingBooking.id).slice(0, 8)}
-                                </p>
-                            </div>
-                            <button 
-                                onClick={() => setEditingBooking(null)} 
-                                className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-all"
-                            >
-                                <X size={18} className="text-gray-600" />
-                            </button>
-                        </div>
-                        
-                        <form onSubmit={submitUpdate} className="p-6 space-y-5">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-wider mb-2">
-                                        Booking Date
-                                    </label>
-                                    <input 
-                                        type="date" 
-                                        required 
-                                        value={editingBooking.booking_date ? editingBooking.booking_date.split('T')[0] : ''} 
-                                        onChange={e => setEditingBooking({...editingBooking, booking_date: e.target.value})} 
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#1B365D] focus:bg-white transition-all"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-wider mb-2">
-                                        Time Slot
-                                    </label>
-                                    <div className="flex items-center gap-2">
-                                        <input 
-                                            type="time" 
-                                            required 
-                                            value={editingBooking.start_time || ''} 
-                                            onChange={e => setEditingBooking({...editingBooking, start_time: e.target.value})} 
-                                            className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#1B365D] focus:bg-white transition-all"
-                                        />
-                                        <span className="text-gray-400 font-bold">-</span>
-                                        <input 
-                                            type="time" 
-                                            required 
-                                            value={editingBooking.end_time || ''} 
-                                            onChange={e => setEditingBooking({...editingBooking, end_time: e.target.value})} 
-                                            className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#1B365D] focus:bg-white transition-all"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-wider mb-2">
-                                    Customer Name
-                                </label>
-                                <input 
-                                    type="text" 
-                                    required 
-                                    value={editingBooking.customer_name} 
-                                    onChange={e => setEditingBooking({...editingBooking, customer_name: e.target.value})} 
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#1B365D] focus:bg-white transition-all"
-                                />
-                            </div>
-                            
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-wider mb-2">
-                                        Phone Number
-                                    </label>
-                                    <input 
-                                        type="tel" 
-                                        required 
-                                        value={editingBooking.phone_number} 
-                                        onChange={e => setEditingBooking({...editingBooking, phone_number: e.target.value})} 
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#1B365D] focus:bg-white transition-all"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-wider mb-2">
-                                        Email Address
-                                    </label>
-                                    <input 
-                                        type="email" 
-                                        value={editingBooking.email || ''} 
-                                        onChange={e => setEditingBooking({...editingBooking, email: e.target.value})} 
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#1B365D] focus:bg-white transition-all"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-wider mb-2">
-                                    Service Address
-                                </label>
-                                <input 
-                                    type="text" 
-                                    value={editingBooking.address || ''} 
-                                    onChange={e => setEditingBooking({...editingBooking, address: e.target.value})} 
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#1B365D] focus:bg-white transition-all"
-                                    placeholder="Enter full address"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-wider mb-2">
-                                    Service Notes / Message
-                                </label>
-                                <textarea 
-                                    rows="4"
-                                    value={editingBooking.service_notes || ''} 
-                                    onChange={e => setEditingBooking({...editingBooking, service_notes: e.target.value})} 
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium resize-none focus:ring-2 focus:ring-[#1B365D] focus:bg-white transition-all"
-                                    placeholder="Enter service details or special instructions..."
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-wider mb-2">
-                                    Price (AUD)
-                                </label>
-                                <div className="relative">
-                                    <DollarSign size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        value={editingBooking.price ?? ''}
-                                        onChange={e => setEditingBooking({...editingBooking, price: e.target.value})}
-                                        className="w-full pl-9 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#1B365D] focus:bg-white transition-all"
-                                        placeholder="0.00"
-                                    />
-                                </div>
-                            </div>
-                            
-                            <div className="flex gap-3 pt-4">
-                                <button 
-                                    type="button"
-                                    onClick={() => setEditingBooking(null)}
-                                    className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-all text-sm uppercase tracking-wider"
-                                >
-                                    Cancel
-                                </button>
-                                <button 
-                                    type="submit" 
-                                    className="flex-1 bg-[#1B365D] text-white py-3 rounded-xl font-bold uppercase tracking-wider hover:shadow-lg transition-all text-sm"
-                                >
-                                    Save Changes
-                                </button>
-                            </div>
-                        </form>
-                    </div>
                 </div>
             )}
             

@@ -12,7 +12,8 @@ const BookingModal = ({ isOpen, selectedDate, onClose, onBookingSuccess }) => {
         address: '',
         price: '',
         start_time: '09:00',
-        end_time: '09:30'
+        end_time: '09:30',
+        service_interval: ''
     });
     const [customers, setCustomers] = useState([]);
     const [selectedCustomerId, setSelectedCustomerId] = useState('');
@@ -81,7 +82,8 @@ const BookingModal = ({ isOpen, selectedDate, onClose, onBookingSuccess }) => {
             service_notes: '',
             price: '',
             start_time: '09:00',
-            end_time: '09:30'
+            end_time: '09:30',
+            service_interval: ''
         });
         setSelectedCustomerId('');
         setSearchTerm('');
@@ -239,10 +241,10 @@ const BookingModal = ({ isOpen, selectedDate, onClose, onBookingSuccess }) => {
                                             ))}
                                             {customers.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
                                                 <div className="p-4 text-center">
-                                                    <p className="text-xs text-gray-400">No customer found</p>
-                                                    <a href="/register" className="text-max-navy text-[10px] font-bold uppercase mt-2 inline-flex items-center gap-1 hover:underline">
-                                                        <UserPlus size={10} /> Register New
-                                                    </a>
+                                                    <p className="text-xs text-gray-400 italic">No existing customer found.</p>
+                                                    <p className="text-max-navy text-[10px] font-bold uppercase mt-1">
+                                                        Fill details below to create new
+                                                    </p>
                                                 </div>
                                             )}
                                         </div>
@@ -366,10 +368,28 @@ const BookingModal = ({ isOpen, selectedDate, onClose, onBookingSuccess }) => {
                                         name="service_notes"
                                         value={formData.service_notes}
                                         onChange={handleChange}
-                                        rows="3"
+                                        rows="2"
                                         className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-max-navy transition-all placeholder-gray-300 font-medium resize-none"
                                         placeholder="Add notes..."
                                     />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">
+                                        Next Service Reminder
+                                    </label>
+                                    <select
+                                        name="service_interval"
+                                        value={formData.service_interval}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-max-navy transition-all font-medium appearance-none cursor-pointer"
+                                    >
+                                        <option value="">No Reminder</option>
+                                        <option value="3w">3 Weeks Later</option>
+                                        <option value="3m">3 Months Later</option>
+                                        <option value="6m">6 Months Later</option>
+                                        <option value="12m">12 Months Later</option>
+                                    </select>
                                 </div>
 
                                 <div className="flex gap-3 pt-2">

@@ -6,7 +6,6 @@ import Login from './pages/Login';
 import AdminLayout from './layouts/AdminLayout';
 import PublicSchedule from './pages/PublicSchedule';
 import ManageBookings from './pages/ManageBookings';
-import AddCustomer from './pages/AddCustomer';
 import ManageCustomers from './pages/ManageCustomers';
 import BlockSlots from './pages/BlockSlots';
 import Settings from './pages/Settings';
@@ -37,16 +36,15 @@ function App() {
     return (
         <Router>
             <Routes>
-                                <Route path="/" element={isLoggedIn ? <Navigate to="/dashboard" /> : <Login onLogin={() => setIsLoggedIn(true)} />} />
+                                <Route path="/" element={isLoggedIn ? <Navigate to="/schedule" /> : <Login onLogin={() => setIsLoggedIn(true)} />} />
                 
                 {/* Admin/Dashboard Layout routes */}
                 {isLoggedIn && (
                     <Route element={<AdminLayout />}>
-                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/reports" element={<Dashboard />} />
                         <Route path="/schedule" element={<PublicSchedule />} />
                         <Route path="/manage" element={<ManageBookings />} />
                         <Route path="/customers" element={<ManageCustomers />} />
-                        <Route path="/create" element={<AddCustomer />} />
                         <Route path="/block" element={<BlockSlots />} />
                         <Route path="/settings" element={<Settings />} />
                         <Route path="/activity" element={<ActivityLog />} />
