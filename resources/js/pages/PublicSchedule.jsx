@@ -261,6 +261,13 @@ export default function PublicSchedule() {
             case 'today':
                 result = allBookings.filter(booking => booking.booking_date && booking.booking_date.split('T')[0] === today);
                 return result.sort((a, b) => (a.start_time || '99:99').localeCompare(b.start_time || '99:99'));
+            case 'due':
+                result = allBookings.filter(booking => booking.customer && booking.customer.next_service_date);
+                return result.sort((a, b) => {
+                    const dateA = new Date(a.customer.next_service_date).getTime();
+                    const dateB = new Date(b.customer.next_service_date).getTime();
+                    return dateA - dateB;
+                });
             default:
                 result = [...allBookings];
                 return result.sort((a, b) => {
@@ -746,6 +753,7 @@ export default function PublicSchedule() {
                                         { key: 'all', label: 'All' },
                                         { key: 'today', label: 'Today' },
                                         { key: 'future', label: 'Upcoming' },
+                                        { key: 'due', label: 'Service Due' },
                                         { key: 'past', label: 'Past' }
                                     ].map(filter => (
                                         <button
