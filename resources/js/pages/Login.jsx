@@ -16,8 +16,8 @@ export default function Login({ onLogin }) {
         setError('');
 
         try {
-            // Demo: Accept any credentials for testing
-            if (email && password) {
+            // Verify specific credentials
+            if (email === 'admin@maxforcepest.com.au' && password === '@#$1234asdfweQaa') {
                 // Store login state and timestamp in localStorage
                 const now = new Date().toLocaleString();
                 localStorage.setItem('isLoggedIn', 'true');
@@ -26,7 +26,7 @@ export default function Login({ onLogin }) {
                 onLogin();
                 navigate('/dashboard');
             } else {
-                setError('Please enter email and password');
+                setError('Invalid email or password');
             }
         } catch (err) {
             setError('Login failed. Please try again.');
