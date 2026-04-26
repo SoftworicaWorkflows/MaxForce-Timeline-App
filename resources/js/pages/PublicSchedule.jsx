@@ -72,6 +72,12 @@ export default function PublicSchedule() {
     const [bookingToEdit, setBookingToEdit] = useState(null);
     const [toast, setToast] = useState(null);
     const [refreshing, setRefreshing] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const bookingsPerPage = 10;
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filterType]);
 
     useEffect(() => {
         fetchAllBookings();
@@ -231,25 +237,48 @@ export default function PublicSchedule() {
 
     const getFilteredBookings = () => {
         const today = formatLocalYYYYMMDD(new Date());
+        let result = [];
         
         switch(filterType) {
             case 'past':
-                return allBookings.filter(booking => booking.booking_date && booking.booking_date.split('T')[0] < today);
+                result = allBookings.filter(booking => booking.booking_date && booking.booking_date.split('T')[0] < today);
+                return result.sort((a, b) => {
+                    const dateA = a.booking_date ? new Date(a.booking_date).getTime() : 0;
+                    const dateB = b.booking_date ? new Date(b.booking_date).getTime() : 0;
+                    return dateB - dateA;
+                });
             case 'future':
-                return allBookings.filter(booking => {
+                result = allBookings.filter(booking => {
                     const bDate = booking.booking_date ? booking.booking_date.split('T')[0] : '';
                     const hasUpcomingReminder = booking.customer && booking.customer.next_service_date && booking.customer.next_service_date.split('T')[0] > today;
                     return bDate > today || hasUpcomingReminder;
                 });
+                return result.sort((a, b) => {
+                    const dateA = a.booking_date ? new Date(a.booking_date).getTime() : Number.MAX_SAFE_INTEGER;
+                    const dateB = b.booking_date ? new Date(b.booking_date).getTime() : Number.MAX_SAFE_INTEGER;
+                    return dateA - dateB;
+                });
             case 'today':
-                return allBookings.filter(booking => booking.booking_date && booking.booking_date.split('T')[0] === today);
+                result = allBookings.filter(booking => booking.booking_date && booking.booking_date.split('T')[0] === today);
+                return result.sort((a, b) => (a.start_time || '99:99').localeCompare(b.start_time || '99:99'));
             default:
-                return allBookings;
+                result = [...allBookings];
+                return result.sort((a, b) => {
+                    const dateA = a.booking_date ? new Date(a.booking_date).getTime() : Number.MAX_SAFE_INTEGER;
+                    const dateB = b.booking_date ? new Date(b.booking_date).getTime() : Number.MAX_SAFE_INTEGER;
+                    return dateA - dateB;
+                });
         }
     };
 
     const filteredBookings = getFilteredBookings();
-    const todaysBookings = getBookingsForDate(new Date(selectedDate));
+    const todaysBookings = getBookingsForDate(new Date(selectedDate)).sort((a, b) => (a.start_time || '99:99').localeCompare(b.start_time || '99:99'));
+
+    // Pagination logic
+    const indexOfLastBooking = currentPage * bookingsPerPage;
+    const indexOfFirstBooking = indexOfLastBooking - bookingsPerPage;
+    const currentBookings = filteredBookings.slice(indexOfFirstBooking, indexOfLastBooking);
+    const totalPages = Math.ceil(filteredBookings.length / bookingsPerPage);
 
     // Helper to format time strings from 09:00:00 to 09:00 AM
     const formatTime = (timeStr) => {
@@ -748,7 +777,7 @@ export default function PublicSchedule() {
                                 </div>
                             ) : (
                                 <div className="space-y-3 sm:space-y-4">
-                                    {filteredBookings.map((booking) => {
+                                    {currentBookings.map((booking) => {
                                         const bDate = booking.booking_date ? booking.booking_date.split('T')[0] : '';
                                         const todayStr = formatLocalYYYYMMDD(new Date());
                                         const hasUpcomingReminder = booking.customer && booking.customer.next_service_date && booking.customer.next_service_date.split('T')[0] > todayStr;
@@ -877,6 +906,29 @@ export default function PublicSchedule() {
                                             </div>
                                         );
                                     })}
+                                </div>
+                            )}
+
+                            {/* Pagination Controls */}
+                            {filteredBookings.length > bookingsPerPage && (
+                                <div className="mt-6 flex justify-center items-center gap-2">
+                                    <button 
+                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                        disabled={currentPage === 1}
+                                        className="p-2 rounded-lg bg-gray-100 text-gray-600 disabled:opacity-50 hover:bg-gray-200 transition-colors"
+                                    >
+                                        <ChevronLeft size={16} />
+                                    </button>
+                                    <span className="text-sm font-medium text-gray-600">
+                                        Page {currentPage} of {totalPages}
+                                    </span>
+                                    <button 
+                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                        disabled={currentPage === totalPages}
+                                        className="p-2 rounded-lg bg-gray-100 text-gray-600 disabled:opacity-50 hover:bg-gray-200 transition-colors"
+                                    >
+                                        <ChevronRight size={16} />
+                                    </button>
                                 </div>
                             )}
                         </div>
