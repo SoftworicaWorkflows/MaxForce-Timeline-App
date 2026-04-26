@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, Clock, MapPin, TrendingUp, History, ClipboardCheck, Loader2, ExternalLink, Plus, AlertCircle, User, Phone, Mail, Award, Star, Activity, DollarSign } from 'lucide-react';
 import { getCustomerStats, createBooking } from '../services/api';
+import ConfirmationModal from './ConfirmationModal';
 
 const StatCard = ({ icon: Icon, label, value, colorClass, trend }) => (
     <div className="bg-white p-5 rounded-2xl border border-gray-100 hover:border-gray-200 transition-all shadow-sm hover:shadow-md group">
@@ -72,6 +73,7 @@ export default function CustomerStatsModal({ isOpen, customer, onClose }) {
     const [submittingService, setSubmittingService] = useState(false);
     const [showAdded, setShowAdded] = useState(false);
     const [addError, setAddError] = useState('');
+    const [contactConfirm, setContactConfirm] = useState({ isOpen: false, type: '', value: '', title: '', message: '' });
 
     useEffect(() => {
         if (isOpen && customer) {
@@ -159,6 +161,47 @@ export default function CustomerStatsModal({ isOpen, customer, onClose }) {
         return 'Low';
     };
 
+    const handlePhoneClick = (phone) => {
+        setContactConfirm({
+            isOpen: true,
+            type: 'phone',
+            value: phone,
+            title: 'Call Customer?',
+            message: `Do you want to call ${phone}?`
+        });
+    };
+
+    const handleEmailClick = (email) => {
+        setContactConfirm({
+            isOpen: true,
+            type: 'mail',
+            value: email,
+            title: 'Email Customer?',
+            message: `Do you want to send an email to ${email}?`
+        });
+    };
+
+    const handleAddressClick = (address) => {
+        setContactConfirm({
+            isOpen: true,
+            type: 'address',
+            value: address,
+            title: 'Open in Maps?',
+            message: `Do you want to see "${address}" on Google Maps?`
+        });
+    };
+
+    const handleContactConfirm = () => {
+        if (contactConfirm.type === 'phone') {
+            window.location.href = `tel:${contactConfirm.value}`;
+        } else if (contactConfirm.type === 'mail') {
+            window.location.href = `mailto:${contactConfirm.value}`;
+        } else if (contactConfirm.type === 'address') {
+            window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contactConfirm.value)}`, '_blank');
+        }
+        setContactConfirm({ ...contactConfirm, isOpen: false });
+    };
+
     const getLoyaltyLevel = () => {
         const totalServices = stats?.stats?.total_services || 0;
         if (totalServices >= 10) return { level: 'Platinum', color: 'text-purple-600', icon: Award };
@@ -216,6 +259,20 @@ export default function CustomerStatsModal({ isOpen, customer, onClose }) {
                             <X size={20} />
                         </button>
                     </div>
+
+                    {/* Contact Confirmation Dialog */}
+                    <ConfirmationModal
+                        isOpen={contactConfirm.isOpen}
+                        onClose={() => setContactConfirm({ ...contactConfirm, isOpen: false })}
+                        onConfirm={handleContactConfirm}
+                        title={contactConfirm.title}
+                        message={contactConfirm.message}
+                        confirmText={
+                            contactConfirm.type === 'phone' ? 'Call Now' : 
+                            contactConfirm.type === 'mail' ? 'Send Email' : 'Open Maps'
+                        }
+                        type={contactConfirm.type}
+                    />
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 md:p-8">
@@ -228,24 +285,43 @@ export default function CustomerStatsModal({ isOpen, customer, onClose }) {
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                             {/* Customer Info Cards */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                <div className="bg-white p-3 rounded-xl border border-gray-100 flex items-center gap-3">
-                                    <Phone size={16} className="text-gray-400" />
-                                    <div>
+                                <button 
+                                    onClick={() => handlePhoneClick(stats?.customer?.phone || customer?.phone)}
+                                    className="bg-white p-3 rounded-xl border border-gray-100 flex items-center gap-3 hover:bg-blue-50 transition-colors group/phone"
+                                >
+                                    <Phone size={16} className="text-gray-400 group-hover/phone:text-blue-500" />
+                                    <div className="text-left">
                                         <p className="text-[10px] font-bold text-gray-400">Phone</p>
-                                        <p className="text-sm font-semibold text-gray-900">
+                                        <p className="text-sm font-semibold text-gray-900 group-hover/phone:text-blue-700">
                                             {stats?.customer?.phone || customer?.phone || 'N/A'}
                                         </p>
                                     </div>
-                                </div>
-                                <div className="bg-white p-3 rounded-xl border border-gray-100 flex items-center gap-3">
-                                    <Mail size={16} className="text-gray-400" />
-                                    <div>
+                                </button>
+                                <button 
+                                    onClick={() => handleEmailClick(stats?.customer?.email || customer?.email)}
+                                    disabled={!(stats?.customer?.email || customer?.email)}
+                                    className="bg-white p-3 rounded-xl border border-gray-100 flex items-center gap-3 hover:bg-green-50 transition-colors group/mail disabled:opacity-50 disabled:hover:bg-white"
+                                >
+                                    <Mail size={16} className="text-gray-400 group-hover/mail:text-green-500" />
+                                    <div className="text-left">
                                         <p className="text-[10px] font-bold text-gray-400">Email</p>
-                                        <p className="text-sm font-semibold text-gray-900 truncate">
+                                        <p className="text-sm font-semibold text-gray-900 truncate group-hover/mail:text-green-700">
                                             {stats?.customer?.email || customer?.email || 'N/A'}
                                         </p>
                                     </div>
-                                </div>
+                                </button>
+                                <button 
+                                    onClick={() => handleAddressClick(stats?.customer?.address || customer?.address)}
+                                    className="bg-white p-3 rounded-xl border border-gray-100 flex items-center gap-3 hover:bg-orange-50 transition-colors group/addr"
+                                >
+                                    <MapPin size={16} className="text-gray-400 group-hover/addr:text-orange-500" />
+                                    <div className="text-left">
+                                        <p className="text-[10px] font-bold text-gray-400">Address</p>
+                                        <p className="text-sm font-semibold text-gray-900 group-hover/addr:text-orange-700">
+                                            {stats?.customer?.address || customer?.address || 'N/A'}
+                                        </p>
+                                    </div>
+                                </button>
                                 <div className="bg-white p-3 rounded-xl border border-gray-100 flex items-center gap-3">
                                     <User size={16} className="text-gray-400" />
                                     <div>

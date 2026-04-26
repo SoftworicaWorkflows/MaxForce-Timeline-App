@@ -18,52 +18,12 @@ import {
     AlertCircle,
     CheckCircle,
     RefreshCw,
-    DollarSign
+    DollarSign,
+    Edit3
 } from 'lucide-react';
+import ConfirmationModal from '../components/ConfirmationModal';
+import EditBookingModal from '../components/EditBookingModal';
 
-// Confirmation Dialog Component
-const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, message, isDeleting }) => {
-    if (!isOpen) return null;
-    
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200">
-                <div className="p-6">
-                    <div className="flex items-center justify-center mb-4">
-                        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                            <AlertCircle size={24} className="text-red-600" />
-                        </div>
-                    </div>
-                    <h3 className="text-lg font-bold text-center text-gray-900 mb-2">{title}</h3>
-                    <p className="text-sm text-gray-600 text-center mb-6">{message}</p>
-                    <div className="flex gap-3">
-                        <button
-                            onClick={onClose}
-                            className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all"
-                            disabled={isDeleting}
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={onConfirm}
-                            disabled={isDeleting}
-                            className="flex-1 px-4 py-2 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                            {isDeleting ? (
-                                <>
-                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                    Deleting...
-                                </>
-                            ) : (
-                                'Delete Booking'
-                            )}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
 
 // Toast Notification Component
 const Toast = ({ message, type, onClose }) => (
@@ -106,6 +66,9 @@ export default function PublicSchedule() {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [bookingToDelete, setBookingToDelete] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [contactConfirm, setContactConfirm] = useState({ isOpen: false, type: '', value: '', title: '', message: '' });
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [bookingToEdit, setBookingToEdit] = useState(null);
     const [toast, setToast] = useState(null);
     const [refreshing, setRefreshing] = useState(false);
 
@@ -147,6 +110,11 @@ export default function PublicSchedule() {
         showToast('Booking created successfully', 'success');
     };
 
+    const handleEditClick = (booking) => {
+        setBookingToEdit(booking);
+        setIsEditModalOpen(true);
+    };
+
     const handleDeleteClick = (booking) => {
         setBookingToDelete(booking);
         setDeleteDialogOpen(true);
@@ -168,6 +136,47 @@ export default function PublicSchedule() {
         } finally {
             setIsDeleting(false);
         }
+    };
+
+    const handlePhoneClick = (phone) => {
+        setContactConfirm({
+            isOpen: true,
+            type: 'phone',
+            value: phone,
+            title: 'Call Customer?',
+            message: `Do you want to call ${phone}?`
+        });
+    };
+
+    const handleEmailClick = (email) => {
+        setContactConfirm({
+            isOpen: true,
+            type: 'mail',
+            value: email,
+            title: 'Email Customer?',
+            message: `Do you want to send an email to ${email}?`
+        });
+    };
+
+    const handleAddressClick = (address) => {
+        setContactConfirm({
+            isOpen: true,
+            type: 'address',
+            value: address,
+            title: 'Open in Maps?',
+            message: `Do you want to see "${address}" on Google Maps?`
+        });
+    };
+
+    const handleContactConfirm = () => {
+        if (contactConfirm.type === 'phone') {
+            window.location.href = `tel:${contactConfirm.value}`;
+        } else if (contactConfirm.type === 'mail') {
+            window.location.href = `mailto:${contactConfirm.value}`;
+        } else if (contactConfirm.type === 'address') {
+            window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contactConfirm.value)}`, '_blank');
+        }
+        setContactConfirm({ ...contactConfirm, isOpen: false });
     };
 
     const goToPreviousMonth = () => {
@@ -274,8 +283,22 @@ export default function PublicSchedule() {
                 />
             )}
 
+            {/* Edit Booking Modal */}
+            <EditBookingModal 
+                isOpen={isEditModalOpen}
+                booking={bookingToEdit}
+                onClose={() => {
+                    setIsEditModalOpen(false);
+                    setBookingToEdit(null);
+                }}
+                onUpdateSuccess={() => {
+                    fetchAllBookings();
+                    showToast('Booking updated successfully', 'success');
+                }}
+            />
+
             {/* Delete Confirmation Dialog */}
-            <ConfirmDialog 
+            <ConfirmationModal 
                 isOpen={deleteDialogOpen}
                 onClose={() => {
                     setDeleteDialogOpen(false);
@@ -284,7 +307,23 @@ export default function PublicSchedule() {
                 onConfirm={handleDeleteConfirm}
                 title="Delete Booking"
                 message={`Are you sure you want to delete the booking for "${bookingToDelete?.customer_name}"? This action cannot be undone.`}
-                isDeleting={isDeleting}
+                confirmText="Delete Booking"
+                type="warning"
+                isLoading={isDeleting}
+            />
+
+            {/* Contact Confirmation Dialog */}
+            <ConfirmationModal
+                isOpen={contactConfirm.isOpen}
+                onClose={() => setContactConfirm({ ...contactConfirm, isOpen: false })}
+                onConfirm={handleContactConfirm}
+                title={contactConfirm.title}
+                message={contactConfirm.message}
+                confirmText={
+                    contactConfirm.type === 'phone' ? 'Call Now' : 
+                    contactConfirm.type === 'mail' ? 'Send Email' : 'Open Maps'
+                }
+                type={contactConfirm.type}
             />
 
             <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
@@ -593,23 +632,32 @@ export default function PublicSchedule() {
                                                             {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
                                                         </span>
                                                         {booking.phone_number && booking.phone_number !== 'N/A' && (
-                                                            <span className="flex items-center gap-1">
+                                                            <button 
+                                                                onClick={() => handlePhoneClick(booking.phone_number)}
+                                                                className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+                                                            >
                                                                 <Phone size={12} />
                                                                 {booking.phone_number}
-                                                            </span>
+                                                            </button>
                                                         )}
                                                         {booking.email && (
-                                                          <span className="flex items-center gap-1">
+                                                          <button 
+                                                              onClick={() => handleEmailClick(booking.email)}
+                                                              className="flex items-center gap-1 hover:text-green-600 transition-colors"
+                                                          >
                                                               <Mail size={12} />
                                                               {booking.email}
-                                                          </span>
+                                                          </button>
                                                         )}
                                                     </div>
                                                     {booking.address && (
-                                                        <div className="flex items-start gap-1 text-gray-500 mt-2">
-                                                            <MapPin size={12} className="text-gray-400 mt-0.5 flex-shrink-0" />
-                                                            <span className="break-words text-xs">{booking.address}</span>
-                                                        </div>
+                                                        <button 
+                                                            onClick={() => handleAddressClick(booking.address)}
+                                                            className="flex items-start gap-1 text-gray-500 mt-2 hover:bg-orange-50 px-2 py-1 rounded-lg transition-colors group/addr text-left w-full"
+                                                        >
+                                                            <MapPin size={12} className="text-gray-400 group-hover/addr:text-orange-500 mt-0.5 flex-shrink-0" />
+                                                            <span className="break-words text-xs group-hover/addr:text-orange-700">{booking.address}</span>
+                                                        </button>
                                                     )}
                                                     {booking.service_notes && (
                                                         <p className="text-xs text-gray-500 mt-1 line-clamp-1 italic">{booking.service_notes}</p>
@@ -621,13 +669,22 @@ export default function PublicSchedule() {
                                                         </div>
                                                     )}
                                                 </div>
-                                                <button 
-                                                    onClick={() => handleDeleteClick(booking)}
-                                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all self-start sm:self-center"
-                                                    title="Delete Booking"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
+                                                <div className="flex flex-col gap-2">
+                                                    <button 
+                                                        onClick={() => handleEditClick(booking)}
+                                                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                                        title="Edit Booking"
+                                                    >
+                                                        <Edit3 size={16} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleDeleteClick(booking)}
+                                                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                        title="Delete Booking"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
@@ -712,6 +769,12 @@ export default function PublicSchedule() {
                                                                 #{String(booking.id).slice(0, 8)}
                                                             </div>
                                                             <button 
+                                                                onClick={() => handleEditClick(booking)}
+                                                                className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                                                            >
+                                                                <Edit3 size={14} />
+                                                            </button>
+                                                            <button 
                                                                 onClick={() => handleDeleteClick(booking)}
                                                                 className="p-1 text-gray-400 hover:text-red-500 transition-colors"
                                                             >
@@ -745,16 +808,22 @@ export default function PublicSchedule() {
                                                         {booking.status !== 'blocked' && (
                                                             <div className="flex flex-wrap items-center gap-3">
                                                                 {booking.phone_number && booking.phone_number !== 'N/A' && (
-                                                                    <div className="flex items-center gap-1">
+                                                                    <button 
+                                                                        onClick={() => handlePhoneClick(booking.phone_number)}
+                                                                        className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+                                                                    >
                                                                         <Phone size={12} className="text-gray-400" />
                                                                         <span className="break-words text-xs">{booking.phone_number}</span>
-                                                                    </div>
+                                                                    </button>
                                                                 )}
                                                                 {booking.email && (
-                                                                    <div className="flex items-center gap-1">
+                                                                    <button 
+                                                                        onClick={() => handleEmailClick(booking.email)}
+                                                                        className="flex items-center gap-1 hover:text-green-600 transition-colors"
+                                                                    >
                                                                         <Mail size={12} className="text-gray-400" />
                                                                         <span className="break-words text-xs truncate max-w-[200px]">{booking.email}</span>
-                                                                    </div>
+                                                                    </button>
                                                                 )}
                                                                 {booking.price !== null && booking.price !== undefined && (
                                                                     <div className="flex items-center gap-1 text-[#8CC63F] font-bold">
@@ -765,10 +834,13 @@ export default function PublicSchedule() {
                                                             </div>
                                                         )}
                                                         {booking.address && (
-                                                            <div className="flex items-start gap-2 text-gray-500 mt-1">
-                                                                <MapPin size={12} className="text-gray-400 mt-0.5 flex-shrink-0" />
-                                                                <span className="break-words text-xs">{booking.address}</span>
-                                                            </div>
+                                                            <button 
+                                                                onClick={() => handleAddressClick(booking.address)}
+                                                                className="flex items-start gap-2 text-gray-500 mt-1 hover:bg-orange-50 px-2 py-1 rounded-lg transition-colors group/addr text-left w-full"
+                                                            >
+                                                                <MapPin size={12} className="text-gray-400 group-hover/addr:text-orange-500 mt-0.5 flex-shrink-0" />
+                                                                <span className="break-words text-xs group-hover/addr:text-orange-700">{booking.address}</span>
+                                                            </button>
                                                         )}
                                                         {booking.service_notes && (
                                                             <div className="flex items-start gap-2 text-gray-500 mt-1">

@@ -346,3 +346,24 @@ export const markAllNotificationsAsRead = async () => {
         throw error;
     }
 };
+
+/**
+ * Trigger a test notification (for debugging)
+ */
+export const triggerTestNotification = async (delay = 0) => {
+    try {
+        const response = await fetch('/api/notifications/test', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+            },
+            body: JSON.stringify({ delay }),
+        });
+        return await response.json();
+    } catch (error) {
+        console.error('Error triggering test notification:', error);
+        throw error;
+    }
+};

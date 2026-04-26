@@ -15,6 +15,7 @@ Route::get('/user', function (Request $request) {
 Route::get('/notifications', [NotificationController::class, 'index']);
 Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
 Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+Route::post('/notifications/test', [NotificationController::class, 'triggerTest']);
 
 // Dashboard routes
 Route::get('/dashboard/stats', [BookingController::class, 'getDashboardStats']);

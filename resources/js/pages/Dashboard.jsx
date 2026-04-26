@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getDashboardStats, getBookings } from '../services/api';
+import { getDashboardStats, getBookings, triggerTestNotification } from '../services/api';
 import { 
     Users, 
     Zap, 
@@ -14,8 +14,12 @@ import {
     ChevronRight,
     RefreshCw,
     Phone,
-    DollarSign
+    DollarSign,
+    Edit3,
+    Terminal
 } from 'lucide-react';
+import ConfirmationModal from '../components/ConfirmationModal';
+import EditBookingModal from '../components/EditBookingModal';
 import { 
     BarChart, 
     Bar, 
@@ -74,7 +78,7 @@ const StatCard = ({ title, value, icon: Icon, color, delay, trend, isLoading }) 
 };
 
 // Booking Item Component
-const BookingItem = ({ booking, index }) => (
+const BookingItem = ({ booking, index, onPhoneClick, onEditClick }) => (
     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all group animate-in slide-in-from-right-4 duration-500 fill-mode-both" 
          style={{ animationDelay: `${index * 100}ms` }}>
         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -96,10 +100,16 @@ const BookingItem = ({ booking, index }) => (
                         {booking.start_time?.substring(0, 5) || '--:--'}
                     </span>
                     {booking.phone_number && booking.phone_number !== 'N/A' && (
-                        <span className="flex items-center gap-1">
+                        <button 
+                            onClick={(e) => {
+                                e.preventDefault();
+                                onPhoneClick(booking.phone_number);
+                            }}
+                            className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+                        >
                             <Phone size={12} /> 
                             {booking.phone_number}
-                        </span>
+                        </button>
                     )}
                     {booking.price !== null && booking.price !== undefined && (
                         <span className="flex items-center gap-1 text-green-600 font-bold">
@@ -114,12 +124,33 @@ const BookingItem = ({ booking, index }) => (
                 </div>
             </div>
         </div>
-        <div className="ml-3 hidden sm:block">
+        <div className="ml-3 hidden sm:flex items-center gap-2">
+            <button 
+                onClick={(e) => {
+                    e.preventDefault();
+                    onEditClick(booking);
+                }}
+                className="p-2 bg-white border border-gray-100 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                title="Edit Booking"
+            >
+                <Edit3 size={14} />
+            </button>
             <span className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700 uppercase tracking-wider shadow-sm">
                 Confirmed
             </span>
         </div>
-        <ChevronRight size={16} className="text-gray-400 ml-2 sm:hidden" />
+        <div className="flex flex-col gap-2 sm:hidden">
+            <button 
+                onClick={(e) => {
+                    e.preventDefault();
+                    onEditClick(booking);
+                }}
+                className="p-2 bg-white border border-gray-100 text-blue-600 rounded-lg"
+            >
+                <Edit3 size={14} />
+            </button>
+            <ChevronRight size={16} className="text-gray-400 ml-2" />
+        </div>
     </div>
 );
 
@@ -159,6 +190,9 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [lastUpdated, setLastUpdated] = useState(new Date());
+    const [contactConfirm, setContactConfirm] = useState({ isOpen: false, type: '', value: '', title: '', message: '' });
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [bookingToEdit, setBookingToEdit] = useState(null);
 
     useEffect(() => {
         fetchDashboardData();
@@ -191,6 +225,37 @@ export default function Dashboard() {
     const handleRefresh = async () => {
         setRefreshing(true);
         await fetchDashboardData();
+    };
+
+    const handleEditClick = (booking) => {
+        setBookingToEdit(booking);
+        setIsEditModalOpen(true);
+    };
+
+    const handlePhoneClick = (phone) => {
+        setContactConfirm({
+            isOpen: true,
+            type: 'phone',
+            value: phone,
+            title: 'Call Customer?',
+            message: `Do you want to call ${phone}?`
+        });
+    };
+
+    const handleTestNotification = async (delay) => {
+        try {
+            await triggerTestNotification(delay);
+            // We don't need to do anything else, the polling will pick it up
+        } catch (error) {
+            console.error('Test notification failed:', error);
+        }
+    };
+
+    const handleContactConfirm = () => {
+        if (contactConfirm.type === 'phone') {
+            window.location.href = `tel:${contactConfirm.value}`;
+        }
+        setContactConfirm({ ...contactConfirm, isOpen: false });
     };
 
     const CustomTooltip = ({ active, payload, label }) => {
@@ -376,7 +441,13 @@ export default function Dashboard() {
                     <div className="space-y-3">
                         {recentBookings.length > 0 ? (
                             recentBookings.map((booking, index) => (
-                                <BookingItem key={booking.id} booking={booking} index={index} />
+                                <BookingItem 
+                                    key={booking.id} 
+                                    booking={booking} 
+                                    index={index} 
+                                    onPhoneClick={handlePhoneClick}
+                                    onEditClick={handleEditClick}
+                                />
                             ))
                         ) : (
                             <div className="text-center py-12">
@@ -389,6 +460,74 @@ export default function Dashboard() {
                         )}
                     </div>
                 </div>
+
+                {/* Debug Tools (Only for testing) */}
+                <div className="mt-12 bg-gray-900 rounded-2xl p-6 text-white border border-white/10 overflow-hidden relative group">
+                    <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <Terminal size={120} />
+                    </div>
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-white/10 rounded-lg">
+                                <Zap size={20} className="text-amber-400" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold">Notification Test Lab</h3>
+                                <p className="text-xs text-gray-400">Test the real-time notification system and auto-reminders.</p>
+                            </div>
+                        </div>
+                        <div className="flex flex-wrap gap-3">
+                            <button 
+                                onClick={() => handleTestNotification(0)}
+                                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-900/20 flex items-center gap-2"
+                            >
+                                <Bell size={14} />
+                                Trigger Now
+                            </button>
+                            <button 
+                                onClick={() => handleTestNotification(2)}
+                                className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border border-white/5"
+                            >
+                                <Clock size={14} />
+                                Simulate 2m Reminder
+                            </button>
+                            <button 
+                                onClick={() => handleTestNotification(5)}
+                                className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border border-white/5"
+                            >
+                                <Clock size={14} />
+                                Simulate 5m Reminder
+                            </button>
+                        </div>
+                        <p className="mt-4 text-[10px] text-gray-500 italic">
+                            * Note: After clicking, wait up to 30 seconds for the auto-poll to pick up the new notification.
+                        </p>
+                    </div>
+                </div>
+
+                {/* Edit Booking Modal */}
+                <EditBookingModal 
+                    isOpen={isEditModalOpen}
+                    booking={bookingToEdit}
+                    onClose={() => {
+                        setIsEditModalOpen(false);
+                        setBookingToEdit(null);
+                    }}
+                    onUpdateSuccess={() => {
+                        fetchDashboardData();
+                    }}
+                />
+
+                {/* Contact Confirmation Dialog */}
+                <ConfirmationModal
+                    isOpen={contactConfirm.isOpen}
+                    onClose={() => setContactConfirm({ ...contactConfirm, isOpen: false })}
+                    onConfirm={handleContactConfirm}
+                    title={contactConfirm.title}
+                    message={contactConfirm.message}
+                    confirmText="Call Now"
+                    type="phone"
+                />
             </div>
         </div>
     );

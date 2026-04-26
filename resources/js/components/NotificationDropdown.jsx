@@ -353,7 +353,7 @@ export default function NotificationDropdown() {
             )}
 
             {/* Global styles */}
-            <style jsx global>{`
+            <style dangerouslySetInnerHTML={{ __html: `
                 @keyframes bounce {
                     0%, 100% { transform: translateY(-5%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
                     50% { transform: translateY(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
@@ -421,7 +421,7 @@ export default function NotificationDropdown() {
                 .slide-in-from-top-2 {
                     animation-name: slideInFromTop;
                 }
-            `}</style>
+            ` }} />
         </div>
     );
 }
