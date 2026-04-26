@@ -19,7 +19,8 @@ import {
     CheckCircle,
     RefreshCw,
     DollarSign,
-    Edit3
+    Edit3,
+    Bell
 } from 'lucide-react';
 import ConfirmationModal from '../components/ConfirmationModal';
 import EditBookingModal from '../components/EditBookingModal';
@@ -749,13 +750,17 @@ export default function PublicSchedule() {
                                 <div className="space-y-3 sm:space-y-4">
                                     {filteredBookings.map((booking) => {
                                         const bDate = booking.booking_date ? booking.booking_date.split('T')[0] : '';
-                                        const isPast = bDate < formatLocalYYYYMMDD(new Date());
-                                        const isToday = bDate === formatLocalYYYYMMDD(new Date());
+                                        const todayStr = formatLocalYYYYMMDD(new Date());
+                                        const hasUpcomingReminder = booking.customer && booking.customer.next_service_date && booking.customer.next_service_date.split('T')[0] > todayStr;
+                                        const isPastBooking = bDate < todayStr;
+                                        const isPast = isPastBooking && !hasUpcomingReminder;
+                                        const isToday = bDate === todayStr;
                                         
                                         return (
                                             <div key={booking.id} className={`
                                                 p-3 sm:p-4 rounded-lg sm:rounded-xl border transition-all hover:shadow-md
                                                 ${isPast ? 'bg-gray-50 border-gray-200 opacity-75' : ''}
+                                                ${hasUpcomingReminder && isPastBooking ? 'border-[#8CC63F] bg-[#8CC63F]/5' : ''}
                                                 ${isToday ? 'border-[#8CC63F] bg-[#8CC63F]/5 shadow-md' : 'border-gray-100'}
                                             `}>
                                                 <div className="space-y-2">
@@ -763,13 +768,13 @@ export default function PublicSchedule() {
                                                         <div className="flex items-center gap-2">
                                                             <div className={`
                                                                 w-1.5 h-1.5 rounded-full
-                                                                ${isPast ? 'bg-gray-400' : isToday ? 'bg-[#8CC63F] animate-pulse' : 'bg-blue-500'}
+                                                                ${isPast ? 'bg-gray-400' : isToday || hasUpcomingReminder ? 'bg-[#8CC63F] animate-pulse' : 'bg-blue-500'}
                                                             `}></div>
                                                             <span className={`
                                                                 text-[9px] sm:text-xs font-bold uppercase
-                                                                ${isPast ? 'text-gray-500' : isToday ? 'text-[#8CC63F]' : 'text-blue-600'}
+                                                                ${isPast ? 'text-gray-500' : isToday || hasUpcomingReminder ? 'text-[#8CC63F]' : 'text-blue-600'}
                                                             `}>
-                                                                {isPast ? 'Completed' : isToday ? 'Today' : 'Upcoming'}
+                                                                {isPast ? 'Completed' : (hasUpcomingReminder && isPastBooking) ? 'Upcoming Reminder' : isToday ? 'Today' : 'Upcoming'}
                                                             </span>
                                                         </div>
                                                         <div className="flex items-center gap-2">
@@ -813,8 +818,20 @@ export default function PublicSchedule() {
                                                             <Clock size={12} className="text-gray-400 ml-1" />
                                                             <span className="font-medium">{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</span>
                                                         </div>
+                                                        {hasUpcomingReminder && (
+                                                            <div className="flex items-center gap-2 flex-wrap text-[#8CC63F] pt-0.5">
+                                                                <Bell size={12} className="animate-bounce" />
+                                                                <span className="font-bold text-[10px] sm:text-xs">
+                                                                    Service Due: {new Date(booking.customer.next_service_date).toLocaleDateString('en-AU', {
+                                                                        day: 'numeric',
+                                                                        month: 'short',
+                                                                        year: 'numeric'
+                                                                    })}
+                                                                </span>
+                                                            </div>
+                                                        )}
                                                         {booking.status !== 'blocked' && (
-                                                            <div className="flex flex-wrap items-center gap-3">
+                                                            <div className="flex flex-wrap items-center gap-3 pt-0.5">
                                                                 {booking.phone_number && booking.phone_number !== 'N/A' && (
                                                                     <button 
                                                                         onClick={() => handlePhoneClick(booking.phone_number)}
