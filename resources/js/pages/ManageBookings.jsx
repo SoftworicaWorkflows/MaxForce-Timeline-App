@@ -81,7 +81,7 @@ export default function ManageBookings() {
     const [toast, setToast] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     
-    const itemsPerPage = 8;
+    const itemsPerPage = 7;
     
     // Filter bookings
     const filteredBookings = bookings.filter(booking => {
@@ -110,8 +110,20 @@ export default function ManageBookings() {
         try {
             const response = await getBookings();
             const bookingsData = response.bookings || [];
-            // Sort by date (newest first)
-            bookingsData.sort((a, b) => new Date(b.booking_date) - new Date(a.booking_date));
+            
+            // Sort logic: nearest next service date or booking date on top
+            const today = new Date().toISOString().split('T')[0];
+            const getSortDate = (b) => {
+                const nextService = b.customer?.next_service_date ? b.customer.next_service_date.split('T')[0] : null;
+                const bDate = b.booking_date ? b.booking_date.split('T')[0] : null;
+                
+                if (nextService && nextService >= today) {
+                    return new Date(nextService).getTime();
+                }
+                return bDate ? new Date(bDate).getTime() : Number.MAX_SAFE_INTEGER;
+            };
+
+            bookingsData.sort((a, b) => getSortDate(a) - getSortDate(b));
             setBookings(bookingsData);
         } catch (error) {
             console.error('Error fetching bookings:', error);

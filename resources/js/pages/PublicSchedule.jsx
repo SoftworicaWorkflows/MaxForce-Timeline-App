@@ -73,11 +73,16 @@ export default function PublicSchedule() {
     const [toast, setToast] = useState(null);
     const [refreshing, setRefreshing] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
-    const bookingsPerPage = 10;
+    const [currentTodaysPage, setCurrentTodaysPage] = useState(1);
+    const bookingsPerPage = 7;
 
     useEffect(() => {
         setCurrentPage(1);
     }, [filterType]);
+
+    useEffect(() => {
+        setCurrentTodaysPage(1);
+    }, [selectedDate]);
 
     useEffect(() => {
         fetchAllBookings();
@@ -244,41 +249,68 @@ export default function PublicSchedule() {
             const nextService = b.customer?.next_service_date ? new Date(b.customer.next_service_date.split('T')[0]).getTime() : null;
             const bDate = b.booking_date ? new Date(b.booking_date.split('T')[0]).getTime() : null;
             
-            // For upcoming/all, if it's a past booking with a future reminder, prioritize the reminder date
-            if (nextService && nextService >= todayTime && bDate && bDate < todayTime) {
+            // Tie-breakers: nextService (if future) > bDate > startTime
+            if (nextService && nextService >= todayTime) {
                 return nextService;
             }
             
-            return nextService || bDate || Number.MAX_SAFE_INTEGER;
+            return bDate || Number.MAX_SAFE_INTEGER;
+        };
+
+        const sortFn = (a, b) => {
+            const dateA = getSortDate(a);
+            const dateB = getSortDate(b);
+            if (dateA !== dateB) return dateA - dateB;
+            
+            // If dates are same, sort by start time
+            return (a.start_time || '99:99').localeCompare(b.start_time || '99:99');
         };
 
         switch(filterType) {
             case 'past':
                 result = allBookings.filter(booking => booking.booking_date && booking.booking_date.split('T')[0] < today);
-                return result.sort((a, b) => {
-                    const dateA = a.booking_date ? new Date(a.booking_date).getTime() : 0;
-                    const dateB = b.booking_date ? new Date(b.booking_date).getTime() : 0;
-                    return dateB - dateA;
-                });
+                return result.sort(sortFn);
             case 'future':
                 result = allBookings.filter(booking => {
                     const bDate = booking.booking_date ? booking.booking_date.split('T')[0] : '';
                     const hasUpcomingReminder = booking.customer && booking.customer.next_service_date && booking.customer.next_service_date.split('T')[0] >= today;
                     return bDate > today || hasUpcomingReminder;
                 });
-                return result.sort((a, b) => getSortDate(a) - getSortDate(b));
+                return result.sort(sortFn);
             case 'today':
                 result = allBookings.filter(booking => booking.booking_date && booking.booking_date.split('T')[0] === today);
-                return result.sort((a, b) => (a.start_time || '99:99').localeCompare(b.start_time || '99:99'));
+                return result.sort(sortFn);
 
             default:
                 result = [...allBookings];
-                return result.sort((a, b) => getSortDate(a) - getSortDate(b));
+                return result.sort(sortFn);
         }
     };
 
     const filteredBookings = getFilteredBookings();
-    const todaysBookings = getBookingsForDate(new Date(selectedDate)).sort((a, b) => (a.start_time || '99:99').localeCompare(b.start_time || '99:99'));
+    
+    // Sorting for todaysBookings by next service date
+    const getTodaysSortDate = (b) => {
+        const todayStr = formatLocalYYYYMMDD(new Date());
+        const nextService = b.customer?.next_service_date ? new Date(b.customer.next_service_date.split('T')[0]).getTime() : null;
+        const todayTime = new Date(todayStr).getTime();
+        
+        if (nextService && nextService >= todayTime) return nextService;
+        return Number.MAX_SAFE_INTEGER;
+    };
+
+    const rawTodaysBookings = getBookingsForDate(new Date(selectedDate));
+    const todaysBookingsSorted = [...rawTodaysBookings].sort((a, b) => {
+        const dateA = getTodaysSortDate(a);
+        const dateB = getTodaysSortDate(b);
+        if (dateA !== dateB) return dateA - dateB;
+        return (a.start_time || '99:99').localeCompare(b.start_time || '99:99');
+    });
+
+    const indexOfLastTodaysBooking = currentTodaysPage * bookingsPerPage;
+    const indexOfFirstTodaysBooking = indexOfLastTodaysBooking - bookingsPerPage;
+    const todaysBookings = todaysBookingsSorted.slice(indexOfFirstTodaysBooking, indexOfLastTodaysBooking);
+    const totalTodaysPages = Math.ceil(todaysBookingsSorted.length / bookingsPerPage);
 
     // Group bookings by service due date (for 'due' filter)
     const groupByServiceDue = (bookings) => {
@@ -656,7 +688,7 @@ export default function PublicSchedule() {
                             <div className="flex items-center gap-2 mb-4">
                                 <Clock size={16} className="text-gray-700" />
                                 <h3 className="text-base sm:text-lg font-black text-gray-900">Bookings on this day</h3>
-                                <span className="text-xs text-gray-500">({todaysBookings.length})</span>
+                                <span className="text-xs text-gray-500">({todaysBookingsSorted.length})</span>
                             </div>
                             
                             {loadingSchedule ? (
@@ -745,6 +777,29 @@ export default function PublicSchedule() {
                                             </div>
                                         </div>
                                     ))}
+                                </div>
+                            )}
+
+                            {/* Today's Bookings Pagination */}
+                            {todaysBookingsSorted.length > bookingsPerPage && (
+                                <div className="mt-6 flex justify-center items-center gap-2">
+                                    <button 
+                                        onClick={() => setCurrentTodaysPage(prev => Math.max(prev - 1, 1))}
+                                        disabled={currentTodaysPage === 1}
+                                        className="p-2 rounded-lg bg-gray-100 text-gray-600 disabled:opacity-50 hover:bg-gray-200 transition-colors"
+                                    >
+                                        <ChevronLeft size={16} />
+                                    </button>
+                                    <span className="text-sm font-medium text-gray-600">
+                                        Page {currentTodaysPage} of {totalTodaysPages}
+                                    </span>
+                                    <button 
+                                        onClick={() => setCurrentTodaysPage(prev => Math.min(prev + 1, totalTodaysPages))}
+                                        disabled={currentTodaysPage === totalTodaysPages}
+                                        className="p-2 rounded-lg bg-gray-100 text-gray-600 disabled:opacity-50 hover:bg-gray-200 transition-colors"
+                                    >
+                                        <ChevronRight size={16} />
+                                    </button>
                                 </div>
                             )}
                         </div>
