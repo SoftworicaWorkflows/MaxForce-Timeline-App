@@ -235,7 +235,11 @@ export default function PublicSchedule() {
             case 'past':
                 return allBookings.filter(booking => booking.booking_date && booking.booking_date.split('T')[0] < today);
             case 'future':
-                return allBookings.filter(booking => booking.booking_date && booking.booking_date.split('T')[0] > today);
+                return allBookings.filter(booking => {
+                    const bDate = booking.booking_date ? booking.booking_date.split('T')[0] : '';
+                    const hasUpcomingReminder = booking.customer && booking.customer.next_service_date && booking.customer.next_service_date.split('T')[0] > today;
+                    return bDate > today || hasUpcomingReminder;
+                });
             case 'today':
                 return allBookings.filter(booking => booking.booking_date && booking.booking_date.split('T')[0] === today);
             default:
@@ -259,7 +263,11 @@ export default function PublicSchedule() {
     const stats = {
         total: allBookings.length,
         today: getBookingsForDate(new Date()).length,
-        upcoming: allBookings.filter(b => b.booking_date && b.booking_date.split('T')[0] > formatLocalYYYYMMDD(new Date())).length
+        upcoming: allBookings.filter(b => {
+            const bDate = b.booking_date ? b.booking_date.split('T')[0] : '';
+            const hasUpcomingReminder = b.customer && b.customer.next_service_date && b.customer.next_service_date.split('T')[0] > formatLocalYYYYMMDD(new Date());
+            return bDate > formatLocalYYYYMMDD(new Date()) || hasUpcomingReminder;
+        }).length
     };
 
     return (

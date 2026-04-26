@@ -79,7 +79,7 @@ class BookingController extends Controller
      */
     public function getBookings(Request $request): JsonResponse
     {
-        $query = Booking::query();
+        $query = Booking::with('customer');
 
         if ($request->filled('date')) {
             $query->whereDate('booking_date', $request->query('date'));
@@ -304,10 +304,11 @@ class BookingController extends Controller
         $booking->update($validated);
 
         // Update customer's next service date if booking date or interval changed
-        if ($booking->customer_id && (isset($validated['booking_date']) || isset($validated['service_interval']))) {
+        if ($booking->customer_id && (isset($validated['booking_date']) || array_key_exists('service_interval', $validated))) {
             $customer = Customer::find($booking->customer_id);
             if ($customer) {
-                $interval = $validated['service_interval'] ?? $customer->service_interval;
+                $interval = array_key_exists('service_interval', $validated) ? $validated['service_interval'] : $customer->service_interval;
+                
                 if ($interval) {
                     $dateObj = \Carbon\Carbon::parse($newDate);
                     if (str_ends_with($interval, 'w')) {
@@ -319,6 +320,12 @@ class BookingController extends Controller
                     $customer->update([
                         'service_interval' => $interval,
                         'next_service_date' => $dateObj->toDateString(),
+                    ]);
+                } elseif (array_key_exists('service_interval', $validated) && is_null($validated['service_interval'])) {
+                    // User explicitly set "No Reminder"
+                    $customer->update([
+                        'service_interval' => null,
+                        'next_service_date' => null,
                     ]);
                 }
             }
