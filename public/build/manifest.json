@@ -1,17 +1,17 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-bdd8cb76.css",
+    "file": "assets/app-b3c8284b.css",
     "src": "resources/js/app.css"
   },
   "resources/js/app.css": {
-    "file": "assets/app-bdd8cb76.css",
+    "file": "assets/app-b3c8284b.css",
     "src": "resources/js/app.css"
   },
   "resources/js/app.jsx": {
     "css": [
-      "assets/app-bdd8cb76.css"
+      "assets/app-b3c8284b.css"
     ],
-    "file": "assets/app-08d45d6c.js",
+    "file": "assets/app-8f564f28.js",
     "isEntry": true,
     "src": "resources/js/app.jsx"
   }

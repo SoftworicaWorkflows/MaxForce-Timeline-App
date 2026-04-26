@@ -281,7 +281,20 @@ export default function PublicSchedule() {
     const filteredBookings = getFilteredBookings();
     const todaysBookings = getBookingsForDate(new Date(selectedDate)).sort((a, b) => (a.start_time || '99:99').localeCompare(b.start_time || '99:99'));
 
-    // Pagination logic
+    // Group bookings by service due date (for 'due' filter)
+    const groupByServiceDue = (bookings) => {
+        const groups = {};
+        bookings.forEach(b => {
+            const raw = b.customer?.next_service_date;
+            if (!raw) return;
+            const key = raw.split('T')[0];
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(b);
+        });
+        return Object.entries(groups).sort(([a], [b]) => new Date(a) - new Date(b));
+    };
+
+    // Pagination logic (only used for non-due filters)
     const indexOfLastBooking = currentPage * bookingsPerPage;
     const indexOfFirstBooking = indexOfLastBooking - bookingsPerPage;
     const currentBookings = filteredBookings.slice(indexOfFirstBooking, indexOfLastBooking);
@@ -782,6 +795,90 @@ export default function PublicSchedule() {
                                     <Calendar size={32} className="text-gray-300 mx-auto mb-2 sm:w-12 sm:h-12" />
                                     <p className="text-gray-400 font-medium text-sm sm:text-base">No bookings found</p>
                                     <p className="text-xs text-gray-400 mt-1">Try a different filter or create a new booking</p>
+                                </div>
+                            ) : filterType === 'due' ? (
+                                /* DATE-GROUPED Service Due view */
+                                <div className="space-y-6">
+                                    {groupByServiceDue(filteredBookings).map(([dateKey, bookings]) => {
+                                        const todayStr = formatLocalYYYYMMDD(new Date());
+                                        const isOverdue = dateKey < todayStr;
+                                        const isDueToday = dateKey === todayStr;
+                                        const dueDate = new Date(dateKey + 'T00:00:00');
+                                        const label = isDueToday ? 'Due Today' : isOverdue ? 'Overdue' : 'Upcoming';
+                                        return (
+                                            <div key={dateKey}>
+                                                {/* Date Group Header */}
+                                                <div className={`flex items-center gap-3 mb-3 px-1`}>
+                                                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider shadow-sm ${
+                                                        isDueToday ? 'bg-amber-400 text-amber-900' :
+                                                        isOverdue ? 'bg-red-100 text-red-700' :
+                                                        'bg-[#8CC63F]/20 text-[#4a7a1e]'
+                                                    }`}>
+                                                        <Bell size={11} className={isDueToday ? 'animate-bounce' : ''} />
+                                                        {label}
+                                                    </div>
+                                                    <span className="text-sm font-black text-gray-800">
+                                                        {dueDate.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                                                    </span>
+                                                    <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{bookings.length}</span>
+                                                    <div className="flex-1 h-px bg-gray-200"></div>
+                                                </div>
+                                                {/* Bookings under this date */}
+                                                <div className="space-y-3 pl-2 border-l-2 border-dashed border-gray-200">
+                                                    {bookings.map((booking) => (
+                                                        <div key={booking.id} className={`p-3 sm:p-4 rounded-xl border transition-all hover:shadow-md ${
+                                                            isDueToday ? 'border-amber-300 bg-amber-50' :
+                                                            isOverdue ? 'border-red-200 bg-red-50/50' :
+                                                            'border-[#8CC63F]/40 bg-[#8CC63F]/5'
+                                                        }`}>
+                                                            <div className="flex items-start justify-between gap-2">
+                                                                <div className="flex-1 space-y-1">
+                                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                                        <h4 className="text-sm font-black text-gray-900">{booking.customer_name}</h4>
+                                                                        <div className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-[9px] font-bold">#{String(booking.id).slice(0,8)}</div>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
+                                                                        <Calendar size={11} className="text-gray-400" />
+                                                                        <span>{booking.booking_date ? new Date(booking.booking_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</span>
+                                                                        <Clock size={11} className="text-gray-400 ml-1" />
+                                                                        <span>{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</span>
+                                                                    </div>
+                                                                    <div className="flex flex-wrap items-center gap-3 text-xs pt-0.5">
+                                                                        {booking.phone_number && booking.phone_number !== 'N/A' && (
+                                                                            <button onClick={() => handlePhoneClick(booking.phone_number)} className="flex items-center gap-1 text-gray-500 hover:text-blue-600 transition-colors">
+                                                                                <Phone size={11} />{booking.phone_number}
+                                                                            </button>
+                                                                        )}
+                                                                        {booking.email && (
+                                                                            <button onClick={() => handleEmailClick(booking.email)} className="flex items-center gap-1 text-gray-500 hover:text-green-600 transition-colors">
+                                                                                <Mail size={11} /><span className="truncate max-w-[160px]">{booking.email}</span>
+                                                                            </button>
+                                                                        )}
+                                                                        {booking.price != null && (
+                                                                            <span className="flex items-center gap-0.5 text-[#8CC63F] font-bold"><DollarSign size={11} />{parseFloat(booking.price).toFixed(2)}</span>
+                                                                        )}
+                                                                    </div>
+                                                                    {booking.address && (
+                                                                        <button onClick={() => handleAddressClick(booking.address)} className="flex items-start gap-1 text-gray-400 hover:text-orange-600 text-xs mt-1 text-left">
+                                                                            <MapPin size={11} className="mt-0.5 flex-shrink-0" /><span className="break-words">{booking.address}</span>
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex flex-col gap-1">
+                                                                    <button onClick={() => handleEditClick(booking)} className="p-1 text-gray-400 hover:text-blue-500 transition-colors" title="Edit">
+                                                                        <Edit3 size={14} />
+                                                                    </button>
+                                                                    <button onClick={() => handleDeleteClick(booking)} className="p-1 text-gray-400 hover:text-red-500 transition-colors" title="Delete">
+                                                                        <Trash2 size={14} />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             ) : (
                                 <div className="space-y-3 sm:space-y-4">
