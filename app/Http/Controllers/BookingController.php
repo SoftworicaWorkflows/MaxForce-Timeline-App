@@ -113,7 +113,7 @@ class BookingController extends Controller
             'address' => 'nullable|string|max:255',
             'service_notes' => 'nullable|string|max:1000',
             'price' => 'nullable|numeric|min:0',
-            'service_interval' => 'nullable|string|in:3w,3m,6m,12m',
+            'service_interval' => 'nullable|string|in:2m,3w,3m,6m,12m',
         ]);
 
         if ($this->hasOverlap($validated['booking_date'], $validated['start_time'], $validated['end_time'])) {
@@ -151,8 +151,12 @@ class BookingController extends Controller
                 
                 if (str_ends_with($interval, 'w')) {
                     $dateObj->addWeeks((int)$interval);
-                } else {
-                    $dateObj->addMonths((int)$interval);
+                } elseif (str_ends_with($interval, 'm')) {
+                    if ($interval === '2m') {
+                        // For testing, just keep it as today/booking date
+                    } else {
+                        $dateObj->addMonths((int)$interval);
+                    }
                 }
                 
                 $updateData['next_service_date'] = $dateObj->toDateString();
@@ -168,8 +172,12 @@ class BookingController extends Controller
             
             if (str_ends_with($interval, 'w')) {
                 $dateObj->addWeeks((int)$interval);
-            } else {
-                $dateObj->addMonths((int)$interval);
+            } elseif (str_ends_with($interval, 'm')) {
+                if ($interval === '2m') {
+                    // For testing, just keep it as today/booking date
+                } else {
+                    $dateObj->addMonths((int)$interval);
+                }
             }
             
             $customer->update([
@@ -286,8 +294,8 @@ class BookingController extends Controller
             'email' => 'sometimes|nullable|email',
             'address' => 'sometimes|nullable|string|max:255',
             'price' => 'nullable|numeric|min:0',
-            'status' => 'sometimes|required|in:available,booked,blocked',
-            'service_interval' => 'nullable|string|in:3w,3m,6m,12m',
+            'status' => 'sometimes|required|in:available,booked,confirmed,completed,cancelled,blocked',
+            'service_interval' => 'nullable|string|in:2m,3w,3m,6m,12m',
         ]);
         
         $newDate = $validated['booking_date'] ?? $booking->booking_date;
@@ -313,8 +321,12 @@ class BookingController extends Controller
                     $dateObj = \Carbon\Carbon::parse($newDate);
                     if (str_ends_with($interval, 'w')) {
                         $dateObj->addWeeks((int)$interval);
-                    } else {
-                        $dateObj->addMonths((int)$interval);
+                    } elseif (str_ends_with($interval, 'm')) {
+                        if ($interval === '2m') {
+                            // For testing, just keep it as today/booking date
+                        } else {
+                            $dateObj->addMonths((int)$interval);
+                        }
                     }
                     
                     $customer->update([

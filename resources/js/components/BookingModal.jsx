@@ -385,6 +385,7 @@ const BookingModal = ({ isOpen, selectedDate, onClose, onBookingSuccess }) => {
                                         className="w-full px-4 py-3 bg-gray-50 border-0 rounded-xl focus:ring-2 focus:ring-max-navy transition-all font-medium appearance-none cursor-pointer"
                                     >
                                         <option value="">No Reminder</option>
+                                        <option value="2m">2 Minutes Later (Test)</option>
                                         <option value="3w">3 Weeks Later</option>
                                         <option value="3m">3 Months Later</option>
                                         <option value="6m">6 Months Later</option>
