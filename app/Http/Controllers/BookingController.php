@@ -152,11 +152,7 @@ class BookingController extends Controller
                 if (str_ends_with($interval, 'w')) {
                     $dateObj->addWeeks((int)$interval);
                 } elseif (str_ends_with($interval, 'm')) {
-                    if ($interval === '2m') {
-                        // For testing, just keep it as today/booking date
-                    } else {
-                        $dateObj->addMonths((int)$interval);
-                    }
+                    $dateObj->addMonths((int)$interval);
                 }
                 
                 $updateData['next_service_date'] = $dateObj->toDateString();
@@ -173,11 +169,7 @@ class BookingController extends Controller
             if (str_ends_with($interval, 'w')) {
                 $dateObj->addWeeks((int)$interval);
             } elseif (str_ends_with($interval, 'm')) {
-                if ($interval === '2m') {
-                    // For testing, just keep it as today/booking date
-                } else {
-                    $dateObj->addMonths((int)$interval);
-                }
+                $dateObj->addMonths((int)$interval);
             }
             
             $customer->update([
@@ -322,11 +314,7 @@ class BookingController extends Controller
                     if (str_ends_with($interval, 'w')) {
                         $dateObj->addWeeks((int)$interval);
                     } elseif (str_ends_with($interval, 'm')) {
-                        if ($interval === '2m') {
-                            // For testing, just keep it as today/booking date
-                        } else {
-                            $dateObj->addMonths((int)$interval);
-                        }
+                        $dateObj->addMonths((int)$interval);
                     }
                     
                     $customer->update([
@@ -401,8 +389,14 @@ class BookingController extends Controller
         if ($excludeId) {
             $query->where('id', '!=', $excludeId);
         }
-        
-        return $query->exists();
+
+        if ($query->exists()) {
+            return true;
+        }
+
+        // Check if any customer has a next_service_date on this day
+        // This acts as a hard block for the entire day as per client requirement
+        return \App\Models\Customer::whereDate('next_service_date', $dateStr)->exists();
     }
 
     /**

@@ -111,19 +111,34 @@ export default function ManageBookings() {
             const response = await getBookings();
             const bookingsData = response.bookings || [];
             
-            // Sort logic: nearest next service date or booking date on top
-            const today = new Date().toISOString().split('T')[0];
-            const getSortDate = (b) => {
-                const nextService = b.customer?.next_service_date ? b.customer.next_service_date.split('T')[0] : null;
-                const bDate = b.booking_date ? b.booking_date.split('T')[0] : null;
-                
-                if (nextService && nextService >= today) {
-                    return new Date(nextService).getTime();
-                }
-                return bDate ? new Date(bDate).getTime() : Number.MAX_SAFE_INTEGER;
-            };
+            // Sort logic: nearest date first
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
 
-            bookingsData.sort((a, b) => getSortDate(a) - getSortDate(b));
+            bookingsData.sort((a, b) => {
+                const dateA = a.booking_date ? new Date(a.booking_date) : null;
+                const dateB = b.booking_date ? new Date(b.booking_date) : null;
+                
+                if (!dateA && !dateB) return 0;
+                if (!dateA) return 1;
+                if (!dateB) return -1;
+
+                dateA.setHours(0, 0, 0, 0);
+                dateB.setHours(0, 0, 0, 0);
+
+                const isFutureA = dateA >= today;
+                const isFutureB = dateB >= today;
+
+                // Priority: Upcoming/Today > Past
+                if (isFutureA && !isFutureB) return -1;
+                if (!isFutureA && isFutureB) return 1;
+
+                // Both future: nearest first (ascending)
+                if (isFutureA && isFutureB) return dateA - dateB;
+                
+                // Both past: most recent first (descending)
+                return dateB - dateA;
+            });
             setBookings(bookingsData);
         } catch (error) {
             console.error('Error fetching bookings:', error);

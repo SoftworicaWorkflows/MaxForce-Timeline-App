@@ -237,7 +237,11 @@ export default function PublicSchedule() {
 
     const getBookingsForDate = (date) => {
         const dateStr = formatLocalYYYYMMDD(date);
-        return allBookings.filter(booking => booking.booking_date && booking.booking_date.split('T')[0] === dateStr);
+        return allBookings.filter(booking => {
+            const isBookingDate = booking.booking_date && booking.booking_date.split('T')[0] === dateStr;
+            const isReminderDate = booking.customer && booking.customer.next_service_date && booking.customer.next_service_date.split('T')[0] === dateStr;
+            return isBookingDate || isReminderDate;
+        });
     };
 
     const getFilteredBookings = () => {
@@ -245,24 +249,43 @@ export default function PublicSchedule() {
         const todayTime = new Date(today).getTime();
         let result = [];
         
-        const getSortDate = (b) => {
+        const getSortInfo = (b) => {
             const nextService = b.customer?.next_service_date ? new Date(b.customer.next_service_date.split('T')[0]).getTime() : null;
             const bDate = b.booking_date ? new Date(b.booking_date.split('T')[0]).getTime() : null;
             
-            // Tie-breakers: nextService (if future) > bDate > startTime
-            if (nextService && nextService >= todayTime) {
-                return nextService;
-            }
+            const isFutureBooking = bDate && bDate >= todayTime;
+            const isFutureReminder = nextService && nextService >= todayTime;
             
-            return bDate || Number.MAX_SAFE_INTEGER;
+            if (isFutureBooking && isFutureReminder) {
+                return { type: 'future', date: Math.min(bDate, nextService) };
+            } else if (isFutureBooking) {
+                return { type: 'future', date: bDate };
+            } else if (isFutureReminder) {
+                return { type: 'future', date: nextService };
+            } else {
+                // Past booking
+                return { type: 'past', date: bDate || 0 };
+            }
         };
 
         const sortFn = (a, b) => {
-            const dateA = getSortDate(a);
-            const dateB = getSortDate(b);
-            if (dateA !== dateB) return dateA - dateB;
+            const infoA = getSortInfo(a);
+            const infoB = getSortInfo(b);
             
-            // If dates are same, sort by start time
+            // Future items first
+            if (infoA.type !== infoB.type) {
+                return infoA.type === 'future' ? -1 : 1;
+            }
+            
+            // If both are future, sort ASC (nearest first)
+            if (infoA.type === 'future') {
+                if (infoA.date !== infoB.date) return infoA.date - infoB.date;
+            } else {
+                // If both are past, sort DESC (most recent first)
+                if (infoA.date !== infoB.date) return infoB.date - infoA.date;
+            }
+            
+            // Tie-breaker: start time
             return (a.start_time || '99:99').localeCompare(b.start_time || '99:99');
         };
 
