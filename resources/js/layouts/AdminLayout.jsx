@@ -18,7 +18,8 @@ import {
     LayoutDashboard,
     ChevronDown,
     User,
-    HelpCircle
+    HelpCircle,
+    FileText
 } from 'lucide-react';
 import { NotificationProvider } from '../context/NotificationContext';
 import NotificationDropdown from '../components/NotificationDropdown';
@@ -195,6 +196,7 @@ const SidebarAndMain = ({
                             label="Customer Schedule" 
                             badge={upcomingCount > 0 ? upcomingCount.toString() : null} 
                         />
+                        <SidebarItem to="/invoices" icon={FileText} label="Invoices" />
                     </NavSection>
 
                     <NavSection title="System & Security">

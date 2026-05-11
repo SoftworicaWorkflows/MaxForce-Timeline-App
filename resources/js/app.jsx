@@ -12,6 +12,9 @@ import Settings from './pages/Settings';
 import ActivityLog from './pages/ActivityLog';
 import Dashboard from './pages/Dashboard';
 import Notifications from './pages/Notifications';
+import ManageInvoices from './pages/ManageInvoices';
+import CreateInvoice from './pages/CreateInvoice';
+import ViewInvoice from './pages/ViewInvoice';
 import '../css/app.css';
 
 function App() {
@@ -49,6 +52,9 @@ function App() {
                         <Route path="/settings" element={<Settings />} />
                         <Route path="/activity" element={<ActivityLog />} />
                         <Route path="/notifications" element={<Notifications />} />
+                        <Route path="/invoices" element={<ManageInvoices />} />
+                        <Route path="/invoices/create" element={<CreateInvoice />} />
+                        <Route path="/invoices/view/:id" element={<ViewInvoice />} />
                     </Route>
                 )}
                 

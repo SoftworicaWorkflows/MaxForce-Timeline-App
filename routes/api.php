@@ -6,10 +6,20 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\InvoiceController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+
+// Invoice routes
+Route::prefix('invoices')->group(function () {
+    Route::get('/', [InvoiceController::class, 'index']);
+    Route::post('/', [InvoiceController::class, 'store']);
+    Route::get('/next-number', [InvoiceController::class, 'getNextInvoiceNumber']);
+    Route::get('/{id}', [InvoiceController::class, 'show']);
+    Route::delete('/{id}', [InvoiceController::class, 'destroy']);
+});
 
 // Notification routes
 Route::get('/notifications', [NotificationController::class, 'index']);

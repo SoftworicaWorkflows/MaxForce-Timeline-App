@@ -367,3 +367,89 @@ export const triggerTestNotification = async (delay = 0) => {
         throw error;
     }
 };
+
+/**
+ * Get all invoices
+ */
+export const getInvoices = async () => {
+    try {
+        const response = await fetch('/api/invoices');
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching invoices:', error);
+        throw error;
+    }
+};
+
+/**
+ * Create a new invoice
+ */
+export const createInvoice = async (invoiceData) => {
+    try {
+        const response = await fetch('/api/invoices', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+            },
+            body: JSON.stringify(invoiceData),
+        });
+        
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.message || 'Invoice generation failed');
+        }
+        return data;
+    } catch (error) {
+        console.error('Error creating invoice:', error);
+        throw error;
+    }
+};
+
+/**
+ * Get the next available invoice number
+ */
+export const getNextInvoiceNumber = async () => {
+    try {
+        const response = await fetch('/api/invoices/next-number');
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching next invoice number:', error);
+        throw error;
+    }
+};
+
+/**
+ * Get a specific invoice
+ */
+export const getInvoice = async (id) => {
+    try {
+        const response = await fetch(`/api/invoices/${id}`);
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching invoice:', error);
+        throw error;
+    }
+};
+
+/**
+ * Delete an invoice
+ */
+export const deleteInvoice = async (id) => {
+    try {
+        const response = await fetch(`/api/invoices/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+            },
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Deletion failed');
+        return data;
+    } catch (error) {
+        console.error('Error deleting invoice:', error);
+        throw error;
+    }
+};
