@@ -34,7 +34,7 @@ const ViewInvoice = () => {
 
     if (loading) return (
         <div className="flex items-center justify-center h-screen p-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
     );
 
@@ -62,9 +62,9 @@ const ViewInvoice = () => {
                 <div className="flex gap-3">
                     <button
                         onClick={handlePrint}
-                        className="flex items-center gap-2 bg-red-600 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-red-700 transition-all shadow-md active:scale-95"
+                        className="flex items-center gap-2 bg-primary text-white px-8 py-3 rounded-xl font-bold hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/10"
                     >
-                        <Printer size={20} /> Print Invoice
+                        <Printer size={20} className="text-secondary" /> Print Invoice
                     </button>
                 </div>
             </div>

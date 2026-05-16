@@ -138,6 +138,7 @@ const InvoiceForm = ({ onSaveSuccess }) => {
                                 value={formData.invoice_no}
                                 readOnly
                             />
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Will be automatically generated</p>
                         </div>
 
                         <div className="space-y-2">
@@ -321,7 +322,7 @@ const InvoiceForm = ({ onSaveSuccess }) => {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="flex items-center gap-3 bg-primary text-white px-10 py-5 rounded-2xl font-black text-xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/20 disabled:opacity-50 disabled:hover:scale-100"
+                                className="flex items-center gap-3 bg-primary text-white px-10 py-5 rounded-2xl font-black text-xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/20 disabled:opacity-50"
                             >
                                 {loading ? (
                                     <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>

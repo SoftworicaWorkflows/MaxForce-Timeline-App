@@ -53,9 +53,9 @@ const ManageInvoices = () => {
                 </div>
                 <button
                     onClick={() => navigate('/invoices/create')}
-                    className="flex items-center gap-2 bg-red-600 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-red-700 transition-all shadow-md active:scale-95"
+                    className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-xl font-bold hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/10"
                 >
-                    <Plus size={20} /> Create Invoice
+                    <Plus size={20} className="text-secondary" /> Create Invoice
                 </button>
             </div>
 
@@ -66,7 +66,7 @@ const ManageInvoices = () => {
                         <input
                             type="text"
                             placeholder="Search by invoice # or customer..."
-                            className="w-full pl-10 pr-4 py-2 rounded-xl border-gray-200 focus:ring-red-500 focus:border-red-500 bg-gray-50/50"
+                            className="w-full pl-10 pr-4 py-2.5 rounded-xl border-gray-200 focus:ring-secondary focus:border-secondary bg-gray-50/50 transition-all"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -100,7 +100,7 @@ const ManageInvoices = () => {
                                             <div className="text-xs text-gray-500">{inv.customer?.phone}</div>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-600">{inv.issue_date}</td>
-                                        <td className="px-6 py-4 text-sm font-bold text-red-600">${parseFloat(inv.total).toFixed(2)}</td>
+                                        <td className="px-6 py-4 text-sm font-bold text-primary">${parseFloat(inv.total).toFixed(2)}</td>
                                         <td className="px-6 py-4 text-right space-x-2">
                                             <button
                                                 onClick={() => navigate(`/invoices/view/${inv.id}`)}
