@@ -53,8 +53,8 @@ const ManageInvoices = () => {
                 </div>
                 <button
                     onClick={() => navigate('/invoices/create')}
-                    className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-xl font-bold hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/10"
-                >
+                    className="ml-2 px-5 py-2 bg-gradient-to-r from-[#1B365D] to-[#1B365D] text-white rounded-xl font-bold text-sm hover:shadow-lg hover:scale-105 transition-all flex items-center gap-2"
+                                  >
                     <Plus size={20} className="text-secondary" /> Create Invoice
                 </button>
             </div>

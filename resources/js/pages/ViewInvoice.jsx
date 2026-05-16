@@ -62,7 +62,7 @@ const ViewInvoice = () => {
                 <div className="flex gap-3">
                     <button
                         onClick={handlePrint}
-                        className="flex items-center gap-2 bg-primary text-white px-8 py-3 rounded-xl font-bold hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/10"
+                        className="flex items-center gap-2 bg-[#8CC63F] text-[#1B365D]  px-8 py-3 rounded-xl font-bold hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/10"
                     >
                         <Printer size={20} className="text-secondary" /> Print Invoice
                     </button>

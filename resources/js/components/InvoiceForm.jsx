@@ -97,11 +97,13 @@ const InvoiceForm = ({ onSaveSuccess }) => {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-8 animate-in fade-in duration-500">
+        <form onSubmit={handleSubmit} className="space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto">
             {/* Header Card: General Information */}
-            <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-                <div className="bg-primary px-6 py-4 flex items-center gap-3">
-                    <FileText className="text-secondary" size={20} />
+            <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/30 border border-gray-100 overflow-hidden transition-all hover:shadow-2xl">
+                <div className="bg-gradient-to-r from-primary to-primary/90 px-8 py-5 flex items-center gap-3">
+                    <div className="bg-white/20 p-2 rounded-xl backdrop-blur-sm">
+                        <FileText className="text-white" size={20} />
+                    </div>
                     <h2 className="text-white font-bold tracking-wide uppercase text-sm">Invoice Details</h2>
                 </div>
                 
@@ -109,12 +111,15 @@ const InvoiceForm = ({ onSaveSuccess }) => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
                         <div className="space-y-2">
                             <label className="flex items-center gap-2 text-sm font-bold text-gray-700">
-                                <User size={16} className="text-primary" /> Customer
+                                <div className="bg-primary/10 p-1.5 rounded-lg">
+                                    <User size={14} className="text-primary" />
+                                </div>
+                                Customer
                             </label>
                             <div className="relative">
                                 <select
                                     required
-                                    className="w-full rounded-xl border-gray-200 bg-gray-50/50 py-3 pl-4 pr-10 focus:ring-secondary focus:border-secondary transition-all appearance-none cursor-pointer"
+                                    className="w-full rounded-xl border border-gray-200 bg-gray-50/50 py-3 pl-4 pr-10 focus:ring-2 focus:ring-secondary/30 focus:border-secondary transition-all appearance-none cursor-pointer text-gray-700 font-medium"
                                     value={formData.customer_id}
                                     onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
                                 >
@@ -129,26 +134,32 @@ const InvoiceForm = ({ onSaveSuccess }) => {
 
                         <div className="space-y-2">
                             <label className="flex items-center gap-2 text-sm font-bold text-gray-700">
-                                <Hash size={16} className="text-primary" /> Invoice Number
+                                <div className="bg-primary/10 p-1.5 rounded-lg">
+                                    <Hash size={14} className="text-primary" />
+                                </div>
+                                Invoice Number
                             </label>
                             <input
                                 type="text"
                                 required
-                                className="w-full rounded-xl border-gray-200 bg-gray-100/50 py-3 px-4 text-gray-500 font-mono font-bold"
+                                className="w-full rounded-xl border border-gray-200 bg-gray-100/50 py-3 px-4 text-gray-600 font-mono font-bold tracking-wider"
                                 value={formData.invoice_no}
                                 readOnly
                             />
-                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Will be automatically generated</p>
+                            <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-tight pl-1">Auto‑generated</p>
                         </div>
 
                         <div className="space-y-2">
                             <label className="flex items-center gap-2 text-sm font-bold text-gray-700">
-                                <Calendar size={16} className="text-primary" /> Issue Date
+                                <div className="bg-primary/10 p-1.5 rounded-lg">
+                                    <Calendar size={14} className="text-primary" />
+                                </div>
+                                Issue Date
                             </label>
                             <input
                                 type="date"
                                 required
-                                className="w-full rounded-xl border-gray-200 bg-gray-50/50 py-3 px-4 focus:ring-secondary focus:border-secondary transition-all"
+                                className="w-full rounded-xl border border-gray-200 bg-gray-50/50 py-3 px-4 focus:ring-2 focus:ring-secondary/30 focus:border-secondary transition-all text-gray-700"
                                 value={formData.issue_date}
                                 onChange={(e) => setFormData({ ...formData, issue_date: e.target.value })}
                             />
@@ -158,11 +169,14 @@ const InvoiceForm = ({ onSaveSuccess }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-2">
                             <label className="flex items-center gap-2 text-sm font-bold text-gray-700">
-                                <Calendar size={16} className="text-primary" /> Due Date
+                                <div className="bg-primary/10 p-1.5 rounded-lg">
+                                    <Calendar size={14} className="text-primary" />
+                                </div>
+                                Due Date
                             </label>
                             <input
                                 type="date"
-                                className="w-full rounded-xl border-gray-200 bg-gray-50/50 py-3 px-4 focus:ring-secondary focus:border-secondary transition-all"
+                                className="w-full rounded-xl border border-gray-200 bg-gray-50/50 py-3 px-4 focus:ring-2 focus:ring-secondary/30 focus:border-secondary transition-all text-gray-700"
                                 value={formData.due_date}
                                 onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
                             />
@@ -170,11 +184,14 @@ const InvoiceForm = ({ onSaveSuccess }) => {
 
                         <div className="space-y-2">
                             <label className="flex items-center gap-2 text-sm font-bold text-gray-700">
-                                <CreditCard size={16} className="text-primary" /> Payment Method
+                                <div className="bg-primary/10 p-1.5 rounded-lg">
+                                    <CreditCard size={14} className="text-primary" />
+                                </div>
+                                Payment Method
                             </label>
                             <div className="relative">
                                 <select
-                                    className="w-full rounded-xl border-gray-200 bg-gray-50/50 py-3 pl-4 pr-10 focus:ring-secondary focus:border-secondary transition-all appearance-none cursor-pointer"
+                                    className="w-full rounded-xl border border-gray-200 bg-gray-50/50 py-3 pl-4 pr-10 focus:ring-2 focus:ring-secondary/30 focus:border-secondary transition-all appearance-none cursor-pointer text-gray-700 font-medium"
                                     value={formData.payment_method}
                                     onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
                                 >
@@ -191,20 +208,20 @@ const InvoiceForm = ({ onSaveSuccess }) => {
             </div>
 
             {/* Items Section */}
-            <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-                <div className="bg-gray-50 border-b border-gray-100 px-8 py-5 flex justify-between items-center">
+            <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/30 border border-gray-100 overflow-hidden transition-all hover:shadow-2xl">
+                <div className="bg-gray-50/80 border-b border-gray-100 px-8 py-5 flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <div className="bg-primary/10 p-2 rounded-lg">
-                            <Plus size={20} className="text-primary" />
+                        <div className="bg-secondary/20 p-2 rounded-xl">
+                            <Plus size={20} className="text-secondary" />
                         </div>
                         <h3 className="text-lg font-bold text-gray-800">Invoice Items</h3>
                     </div>
                     <button
                         type="button"
                         onClick={addItem}
-                        className="flex items-center gap-2 bg-secondary text-primary px-4 py-2 rounded-xl font-bold text-sm hover:scale-105 active:scale-95 transition-all shadow-sm"
+                        className="flex items-center gap-2 bg-secondary text-primary px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-secondary/90 active:scale-95 transition-all shadow-sm hover:shadow-md"
                     >
-                        <Plus size={18} /> Add New Item
+                        <Plus size={18} /> Add Item
                     </button>
                 </div>
                 
@@ -219,13 +236,13 @@ const InvoiceForm = ({ onSaveSuccess }) => {
 
                     <div className="space-y-4">
                         {formData.items.map((item, index) => (
-                            <div key={index} className="group flex flex-wrap md:flex-nowrap gap-4 items-start bg-gray-50/50 hover:bg-white hover:shadow-lg hover:shadow-gray-100 p-4 rounded-2xl border border-transparent hover:border-gray-100 transition-all duration-300">
+                            <div key={index} className="group flex flex-wrap md:flex-nowrap gap-4 items-start bg-gray-50/80 hover:bg-white hover:shadow-lg hover:shadow-gray-100 p-4 rounded-2xl border border-transparent hover:border-gray-100 transition-all duration-300">
                                 <div className="flex-1 min-w-[250px]">
                                     <input
                                         type="text"
                                         placeholder="Pest control services..."
                                         required
-                                        className="w-full rounded-xl border-gray-200 bg-white py-3 px-4 focus:ring-secondary focus:border-secondary transition-all"
+                                        className="w-full rounded-xl border border-gray-200 bg-white py-3 px-4 focus:ring-2 focus:ring-secondary/30 focus:border-secondary transition-all placeholder:text-gray-300"
                                         value={item.description}
                                         onChange={(e) => handleItemChange(index, 'description', e.target.value)}
                                     />
@@ -236,7 +253,7 @@ const InvoiceForm = ({ onSaveSuccess }) => {
                                         placeholder="0"
                                         required
                                         min="1"
-                                        className="w-full rounded-xl border-gray-200 bg-white py-3 px-4 text-center focus:ring-secondary focus:border-secondary transition-all"
+                                        className="w-full rounded-xl border border-gray-200 bg-white py-3 px-4 text-center focus:ring-2 focus:ring-secondary/30 focus:border-secondary transition-all"
                                         value={item.qty}
                                         onChange={(e) => handleItemChange(index, 'qty', e.target.value)}
                                     />
@@ -248,19 +265,23 @@ const InvoiceForm = ({ onSaveSuccess }) => {
                                         placeholder="0.00"
                                         required
                                         step="0.01"
-                                        className="w-full rounded-xl border-gray-200 bg-white py-3 pl-10 pr-4 text-right focus:ring-secondary focus:border-secondary transition-all font-semibold"
+                                        className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-4 text-right focus:ring-2 focus:ring-secondary/30 focus:border-secondary transition-all font-semibold"
                                         value={item.unit_price}
                                         onChange={(e) => handleItemChange(index, 'unit_price', e.target.value)}
                                     />
                                 </div>
-                                <div className="w-full md:w-[160px] py-3 px-4 bg-primary/5 border border-primary/10 rounded-xl text-right font-bold text-primary">
+                                <div className="w-full md:w-[160px] py-3 px-4 bg-secondary/10 border border-secondary/20 rounded-xl text-right font-bold text-primary">
                                     ${parseFloat(item.amount).toFixed(2)}
                                 </div>
                                 <div className="flex items-center justify-center">
                                     <button
                                         type="button"
                                         onClick={() => removeItem(index)}
-                                        className={`p-3 rounded-xl transition-all ${formData.items.length === 1 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-white hover:bg-red-500 shadow-sm hover:shadow-red-200'}`}
+                                        className={`p-3 rounded-xl transition-all ${
+                                            formData.items.length === 1 
+                                                ? 'text-gray-200 cursor-not-allowed' 
+                                                : 'text-gray-400 hover:text-white hover:bg-red-500 shadow-sm hover:shadow-red-200'
+                                        }`}
                                         disabled={formData.items.length === 1}
                                     >
                                         <Trash2 size={20} />
@@ -273,62 +294,76 @@ const InvoiceForm = ({ onSaveSuccess }) => {
             </div>
 
             {/* Footer: Notes and Summary */}
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
-                <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 p-8 space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-8">
+                <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/30 border border-gray-100 p-8 space-y-4 transition-all hover:shadow-2xl">
                     <label className="flex items-center gap-2 text-sm font-bold text-gray-700">
-                        <FileText size={16} className="text-primary" /> Additional Notes
+                        <div className="bg-primary/10 p-1.5 rounded-lg">
+                            <FileText size={14} className="text-primary" />
+                        </div>
+                        Additional Notes
                     </label>
                     <textarea
-                        className="w-full rounded-2xl border-gray-200 bg-gray-50/50 p-4 focus:ring-secondary focus:border-secondary transition-all min-h-[160px]"
+                        className="w-full rounded-2xl border border-gray-200 bg-gray-50/50 p-4 focus:ring-2 focus:ring-secondary/30 focus:border-secondary transition-all min-h-[160px] placeholder:text-gray-300"
                         placeholder="Add special instructions, bank details, or terms..."
                         value={formData.notes}
                         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     ></textarea>
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 p-8 flex flex-col justify-between">
+                <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/30 border border-gray-100 p-8 flex flex-col justify-between transition-all hover:shadow-2xl bg-gradient-to-b from-white to-gray-50/30">
                     <div className="space-y-4">
                         <div className="flex justify-between items-center text-gray-500 font-bold uppercase text-xs tracking-widest">
                             <span>Subtotal</span>
                             <span className="text-xl font-bold text-primary">${formData.subtotal.toFixed(2)}</span>
                         </div>
                         
-                        <div className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl border border-gray-100 transition-all hover:bg-gray-100/50">
+                        <div className="flex justify-between items-center p-4 bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
                             <div className="space-y-1">
-                                <span className="block text-xs font-bold uppercase tracking-wider text-gray-400">Tax Configuration</span>
+                                <span className="block text-xs font-bold uppercase tracking-wider text-gray-400">Tax</span>
                                 <span className="font-bold text-primary">Include GST (10%)</span>
                             </div>
                             <button
                                 type="button"
                                 onClick={handleGstToggle}
-                                className={`w-14 h-7 rounded-full transition-all relative border-2 ${formData.gst_status ? 'bg-secondary border-secondary' : 'bg-gray-200 border-gray-200'}`}
+                                className={`relative w-14 h-7 rounded-full transition-all border-2 ${
+                                    formData.gst_status 
+                                        ? 'bg-secondary border-secondary' 
+                                        : 'bg-gray-200 border-gray-200'
+                                }`}
                             >
-                                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-all ${formData.gst_status ? 'left-7' : 'left-0.5'}`}></div>
+                                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-all ${
+                                    formData.gst_status ? 'left-7' : 'left-0.5'
+                                }`}></div>
                             </button>
                         </div>
 
                         <div className="flex justify-between items-center text-gray-500 font-bold uppercase text-xs tracking-widest">
                             <span>GST Amount</span>
-                            <span className="text-xl font-bold text-primary">${(formData.gst_status ? formData.subtotal * 0.1 : 0).toFixed(2)}</span>
+                            <span className="text-xl font-bold text-primary">
+                                ${(formData.gst_status ? formData.subtotal * 0.1 : 0).toFixed(2)}
+                            </span>
                         </div>
                     </div>
 
                     <div className="mt-8 pt-6 border-t border-gray-100">
                         <div className="flex justify-between items-end">
                             <div className="space-y-1">
-                                <span className="text-xs font-bold uppercase tracking-widest text-secondary">Total Amount Due</span>
-                                <div className="text-5xl font-black tracking-tighter text-primary">${formData.total.toFixed(2)}</div>
+                                <span className="text-xs font-bold uppercase tracking-widest text-secondary">Total Due</span>
+                                <div className="text-5xl font-black tracking-tighter text-primary">
+                                    ${formData.total.toFixed(2)}
+                                </div>
                             </div>
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="flex items-center gap-3 bg-primary text-white px-10 py-5 rounded-2xl font-black text-xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/20 disabled:opacity-50"
+                                className="ml-2 px-6 py-3  bg-[#8CC63F] text-[#1B365D] rounded-xl font-bold text-sm hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2 disabled:opacity-80 disabled:cursor-not-allowed"
                             >
                                 {loading ? (
                                     <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
                                 ) : (
                                     <>
-                                        <Save size={28} className="text-secondary" /> <span>Save Invoice</span>
+                                        <Save size={20} className="text-secondary" />
+                                        <span>Save Invoice</span>
                                     </>
                                 )}
                             </button>
