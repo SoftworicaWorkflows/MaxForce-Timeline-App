@@ -18,7 +18,8 @@ import {
     ChevronRight,
     Search,
     DollarSign,
-    Edit3
+    Edit3,
+    Filter
 } from 'lucide-react';
 import { getBookings, deleteBooking, updateBooking } from '../services/api';
 import CustomerStatsModal from '../components/CustomerStatsModal';
@@ -80,18 +81,62 @@ export default function ManageBookings() {
     const [bookingToEdit, setBookingToEdit] = useState(null);
     const [toast, setToast] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [sortBy, setSortBy] = useState('nearest');
     
     const itemsPerPage = 7;
     
-    // Filter bookings
-    const filteredBookings = bookings.filter(booking => {
-        const matchesSearch = 
-            booking.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            booking.phone_number?.includes(searchTerm) ||
-            booking.email?.toLowerCase().includes(searchTerm.toLowerCase());
-        
-        return matchesSearch;
-    });
+    // Filter and Sort bookings
+    const filteredBookings = [...bookings]
+        .filter(booking => {
+            const matchesSearch = 
+                booking.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                booking.phone_number?.includes(searchTerm) ||
+                booking.email?.toLowerCase().includes(searchTerm.toLowerCase());
+            
+            return matchesSearch;
+        })
+        .sort((a, b) => {
+            if (sortBy === 'nearest') {
+                const now = new Date();
+                
+                const getDateTime = (bkg) => {
+                    if (!bkg.booking_date) return null;
+                    const d = new Date(bkg.booking_date);
+                    if (bkg.start_time) {
+                        const [hours, minutes] = bkg.start_time.split(':');
+                        d.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+                    } else {
+                        d.setHours(0, 0, 0, 0);
+                    }
+                    return d;
+                };
+
+                const dateA = getDateTime(a);
+                const dateB = getDateTime(b);
+
+                if (!dateA && !dateB) return 0;
+                if (!dateA) return 1;
+                if (!dateB) return -1;
+
+                const isFutureA = dateA >= now;
+                const isFutureB = dateB >= now;
+
+                if (isFutureA && !isFutureB) return -1;
+                if (!isFutureA && isFutureB) return 1;
+
+                if (isFutureA && isFutureB) return dateA - dateB;
+                return dateB - dateA;
+            } else if (sortBy === 'date_desc') {
+                return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+            } else if (sortBy === 'date_asc') {
+                return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+            } else if (sortBy === 'name_asc') {
+                return (a.customer_name || '').localeCompare(b.customer_name || '');
+            } else if (sortBy === 'name_desc') {
+                return (b.customer_name || '').localeCompare(a.customer_name || '');
+            }
+            return 0;
+        });
     
     const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
     const currentBookings = filteredBookings.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -110,35 +155,6 @@ export default function ManageBookings() {
         try {
             const response = await getBookings();
             const bookingsData = response.bookings || [];
-            
-            // Sort logic: nearest date first
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            bookingsData.sort((a, b) => {
-                const dateA = a.booking_date ? new Date(a.booking_date) : null;
-                const dateB = b.booking_date ? new Date(b.booking_date) : null;
-                
-                if (!dateA && !dateB) return 0;
-                if (!dateA) return 1;
-                if (!dateB) return -1;
-
-                dateA.setHours(0, 0, 0, 0);
-                dateB.setHours(0, 0, 0, 0);
-
-                const isFutureA = dateA >= today;
-                const isFutureB = dateB >= today;
-
-                // Priority: Upcoming/Today > Past
-                if (isFutureA && !isFutureB) return -1;
-                if (!isFutureA && isFutureB) return 1;
-
-                // Both future: nearest first (ascending)
-                if (isFutureA && isFutureB) return dateA - dateB;
-                
-                // Both past: most recent first (descending)
-                return dateB - dateA;
-            });
             setBookings(bookingsData);
         } catch (error) {
             console.error('Error fetching bookings:', error);
@@ -331,6 +347,31 @@ export default function ManageBookings() {
                             className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1B365D] focus:bg-white transition-all text-sm font-medium"
                         />
                     </div>
+                    
+                    {/* Sort Dropdown */}
+                    <div className="relative md:w-56 shrink-0">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                            <Filter size={18} />
+                        </div>
+                        <select
+                            value={sortBy}
+                            onChange={(e) => {
+                                setSortBy(e.target.value);
+                                setCurrentPage(1);
+                            }}
+                            className="w-full pl-11 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1B365D] focus:bg-white transition-all text-sm font-medium appearance-none cursor-pointer"
+                        >
+                            <option value="nearest">Nearest Booking</option>
+                            <option value="date_desc">Newest Added</option>
+                            <option value="date_asc">Oldest Added</option>
+                            <option value="name_asc">Name (A-Z)</option>
+                            <option value="name_desc">Name (Z-A)</option>
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                    </div>
+
                     {searchTerm && (
                         <button 
                             onClick={clearFilters}
